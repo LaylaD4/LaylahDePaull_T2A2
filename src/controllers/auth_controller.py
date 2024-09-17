@@ -3,6 +3,8 @@ from models.user import User, user_schema
 from init import bcrypt, db
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
+from flask_jwt_extended import create_access_token
+from datetime import timedelta
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -31,4 +33,21 @@ def register_user():
         if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
             return {"error": "The email address already exists. Please try again."}, 400
         
-    
+@auth_bp.route("/login", methods=["POST"])
+def login_user():
+    # Get the data from the body of the request
+    body_data = request.get_json()
+    # Find the user in the database with that email address
+    stmt = db.select(User).filter_by(email=body_data.get("email"))
+    user = db.session.scalar(stmt)
+    # If the user exists and check the password is correct, check database password (user.password) against request password body_data.get("password")
+    if user and bcrypt.check_password_hash(user.password, body_data.get("password")):
+        # Create a JWT token
+        token = create_access_token(identity=str(user.user_id), expires_delta=timedelta(days=1))
+        # Respond back
+        return {"email": user.email, "is_admin": user.is_admin, "token": token}
+    else:
+        return {"error": "Invalid email or password was entered."}, 400
+
+
+

@@ -1,6 +1,8 @@
 from init import db, ma
 # Importing datetime and timezone to handle date and time, including UTC timestamps 
 from datetime import datetime, timezone
+from marshmallow import fields
+
 
 # Create model for users table
 class User(db.Model):
@@ -12,9 +14,13 @@ class User(db.Model):
     created_at = db.Column(db.Date, nullable=False, default=lambda: datetime.now(timezone.utc).date())
     is_admin = db.Column(db.Boolean, default=False)
 
+    # Relationships
+    recipes = db.relationship("Recipe", back_populates="user")
+    shopping_lists = db.relationship("ShoppingList", back_populates="user")
+
 # Create schema for users table
 class UserSchema(ma.Schema):
-    class Meta:
+   class Meta:
         fields = ("user_id", "username", "email", "password", "created_at", "is_admin")
 
 # To handle a single user object
@@ -22,3 +28,4 @@ user_schema = UserSchema(exclude=["password"])
 
 # To handle a list of user objects
 users_schema = UserSchema(many=True, exclude=["password"])
+

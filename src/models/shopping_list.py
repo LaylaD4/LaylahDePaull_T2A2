@@ -6,7 +6,7 @@ class ShoppingList(db.Model):
 
     shopping_list_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.Date)
     # Create Foreign Key that references 'users' table
     user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
 

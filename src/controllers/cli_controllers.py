@@ -58,20 +58,30 @@ def seed_tables():
             description="Breakfast, Keto, Gluten Free",
             is_predefined=True,
             created_at=datetime.now(timezone.utc).date(),
-            user_id=1  # If recipes are not associated with a specific user
+            user_id=1  # Recipe associated with admin user
         ),
         Recipe(
             name="Vegan Pancakes",
             description="Breakfast, Vegan, Gluten Free, Dairy Free",
             is_predefined=True,
             created_at=datetime.now(timezone.utc).date(),
-            user_id=1
+            user_id=1 # Recipe associated with admin user
         )
     ]
     # Add recipes list
     db.session.add_all(recipes)
 
     # Commit the changes for users, ingredients, and recipes.
+    db.session.commit()
+
+    # Create ShoppingLists for each recipe
+    shopping_lists = [
+        ShoppingList(name="Keto Pancakes Ingredients", user_id=1),
+        ShoppingList(name="Vegan Pancakes Ingredients", user_id=1)
+    ]
+    db.session.add_all(shopping_lists)
+
+    # Commit to generate IDs for shopping lists
     db.session.commit()
 
     # Create RecipeIngredient associations
@@ -142,6 +152,76 @@ def seed_tables():
     db.session.add_all(recipe_ingredients)
     
     # Commit changes to add RecipeIngredient associations
+    db.session.commit()
+
+    # Create ShoppingListItems for each ShoppingList
+    shopping_list_items = [
+        # Items for Keto Pancakes
+        ShoppingListItem(
+            amount=200,
+            unit="grams",
+            shopping_list_id=1,  # Keto Pancakes Ingredients
+            ingredient_id=1      # Almond Flour
+        ),
+        ShoppingListItem(
+            amount=25,
+            unit="grams",
+            shopping_list_id=1,  # Keto Pancakes Ingredients
+            ingredient_id=2      # Butter
+        ),
+        ShoppingListItem(
+            amount=4,
+            unit="large",
+            shopping_list_id=1,  # Keto Pancakes Ingredients
+            ingredient_id=3      # Eggs
+        ),
+        ShoppingListItem(
+            amount=150,
+            unit="grams",
+            shopping_list_id=1,  # Keto Pancakes Ingredients
+            ingredient_id=4      # Cream Cheese
+        ),
+        ShoppingListItem(
+            amount=50,
+            unit="grams",
+            shopping_list_id=1,  # Keto Pancakes Ingredients
+            ingredient_id=5      # Blueberries
+        ),
+        # Items for Vegan Pancakes
+        ShoppingListItem(
+            amount=300,
+            unit="grams",
+            shopping_list_id=2,  # Vegan Pancakes Ingredients
+            ingredient_id=1      # Almond Flour
+        ),
+        ShoppingListItem(
+            amount=50,
+            unit="mls",
+            shopping_list_id=2,  # Vegan Pancakes Ingredients
+            ingredient_id=6      # Coconut Oil
+        ),
+        ShoppingListItem(
+            amount=1,
+            unit="tsp",
+            shopping_list_id=2,  # Vegan Pancakes Ingredients
+            ingredient_id=7      # Baking Powder
+        ),
+        ShoppingListItem(
+            amount=0.5,
+            unit="cup",
+            shopping_list_id=2,  # Vegan Pancakes Ingredients
+            ingredient_id=8      # Cashew Yoghurt
+        ),
+        ShoppingListItem(
+            amount=20,
+            unit="mls",
+            shopping_list_id=2,  # Vegan Pancakes Ingredients
+            ingredient_id=9      # Maple Syrup
+        )
+    ]
+    db.session.add_all(shopping_list_items)
+    
+    # Commit changes to add ShoppingListItems
     db.session.commit()
 
     # Send an acknowledgment message

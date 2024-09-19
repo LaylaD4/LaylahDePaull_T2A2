@@ -11,12 +11,11 @@ class User(db.Model):
     username = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.Date, nullable=False, default=lambda: datetime.now(timezone.utc).date())
+    created_at = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date())
     is_admin = db.Column(db.Boolean, default=False)
 
     # Relationships
     recipes = db.relationship("Recipe", back_populates="user")
-    shopping_lists = db.relationship("ShoppingList", back_populates="user")
 
 # Create schema for users table
 class UserSchema(ma.Schema):

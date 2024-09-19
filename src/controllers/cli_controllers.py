@@ -4,9 +4,6 @@ from models.user import User
 from models.recipe import Recipe
 from models.ingredient import Ingredient
 from models.recipe_ingredient import RecipeIngredient
-from models.shopping_list import ShoppingList
-from models.shopping_list_item import ShoppingListItem
-from datetime import datetime, timezone
 
 db_commands = Blueprint("db", __name__)
 
@@ -16,27 +13,28 @@ def create_tables():
     db.create_all()
     print("Tables created")
 
-# Command to seed tables, eg; 'flask db seed'.
 @db_commands.cli.command("seed")
 def seed_tables():
-    # Create a list of User instances
+    # Create and seed users
     users = [
         User(
-            username = "layla_admin",
-            email = "admin@mealplanner.com",
-            password = bcrypt.generate_password_hash("123456").decode("utf-8"),
-            is_admin = True
-        ), User(
-            username = "elise04",
-            email = "elisebc04@email.com",
-            password = bcrypt.generate_password_hash("qwerty12").decode("utf-8")
+            username="layla_admin",
+            email="admin@mealplanner.com",
+            password=bcrypt.generate_password_hash("123456").decode("utf-8"),
+            is_admin=True
+        ),
+        User(
+            username="elise04",
+            email="elisebc04@email.com",
+            password=bcrypt.generate_password_hash("qwerty12").decode("utf-8")
         )
     ]
 
-    # Add the users list
+    # Add and commit users
     db.session.add_all(users)
+    db.session.commit()
 
-    # Create a list of Ingredient instances
+    # Create and seed ingredients
     ingredients = [
         Ingredient(name="Almond Flour"),
         Ingredient(name="Butter"),
@@ -46,45 +44,34 @@ def seed_tables():
         Ingredient(name="Coconut Oil"),
         Ingredient(name="Baking Powder"),
         Ingredient(name="Cashew Yoghurt"),
-        Ingredient(name="Maple Syrup"),
+        Ingredient(name="Maple Syrup")
     ]
-     # Add the ingredients list
-    db.session.add_all(ingredients)
 
-    # Create a list of Recipe instances
+    # Add and commit ingredients
+    db.session.add_all(ingredients)
+    db.session.commit()
+
+    # Create and seed recipes
     recipes = [
         Recipe(
             name="Keto Pancakes",
             description="Breakfast, Keto, Gluten Free",
             is_predefined=True,
-            created_at=datetime.now(timezone.utc).date(),
-            user_id=1  # Recipe associated with admin user
+            user_id=1  # Admin
         ),
         Recipe(
             name="Vegan Pancakes",
             description="Breakfast, Vegan, Gluten Free, Dairy Free",
             is_predefined=True,
-            created_at=datetime.now(timezone.utc).date(),
-            user_id=1 # Recipe associated with admin user
+            user_id=1  # Admin
         )
     ]
-    # Add recipes list
+
+    # Add and commit recipes
     db.session.add_all(recipes)
-
-    # Commit the changes for users, ingredients, and recipes.
     db.session.commit()
 
-    # Create ShoppingLists for each recipe
-    shopping_lists = [
-        ShoppingList(name="Keto Pancakes Ingredients", user_id=1),
-        ShoppingList(name="Vegan Pancakes Ingredients", user_id=1)
-    ]
-    db.session.add_all(shopping_lists)
-
-    # Commit to generate IDs for shopping lists
-    db.session.commit()
-
-    # Create RecipeIngredient associations
+    # Create and seed recipe-ingredient associations
     recipe_ingredients = [
         RecipeIngredient(
             recipe_id=1,  # Keto Pancakes
@@ -150,81 +137,9 @@ def seed_tables():
 
     # Add RecipeIngredient associations to the session
     db.session.add_all(recipe_ingredients)
-    
-    # Commit changes to add RecipeIngredient associations
+    # Commit
     db.session.commit()
 
-    # Create ShoppingListItems for each ShoppingList
-    shopping_list_items = [
-        # Items for Keto Pancakes
-        ShoppingListItem(
-            amount=200,
-            unit="grams",
-            shopping_list_id=1,  # Keto Pancakes Ingredients
-            ingredient_id=1      # Almond Flour
-        ),
-        ShoppingListItem(
-            amount=25,
-            unit="grams",
-            shopping_list_id=1,  # Keto Pancakes Ingredients
-            ingredient_id=2      # Butter
-        ),
-        ShoppingListItem(
-            amount=4,
-            unit="large",
-            shopping_list_id=1,  # Keto Pancakes Ingredients
-            ingredient_id=3      # Eggs
-        ),
-        ShoppingListItem(
-            amount=150,
-            unit="grams",
-            shopping_list_id=1,  # Keto Pancakes Ingredients
-            ingredient_id=4      # Cream Cheese
-        ),
-        ShoppingListItem(
-            amount=50,
-            unit="grams",
-            shopping_list_id=1,  # Keto Pancakes Ingredients
-            ingredient_id=5      # Blueberries
-        ),
-        # Items for Vegan Pancakes
-        ShoppingListItem(
-            amount=300,
-            unit="grams",
-            shopping_list_id=2,  # Vegan Pancakes Ingredients
-            ingredient_id=1      # Almond Flour
-        ),
-        ShoppingListItem(
-            amount=50,
-            unit="mls",
-            shopping_list_id=2,  # Vegan Pancakes Ingredients
-            ingredient_id=6      # Coconut Oil
-        ),
-        ShoppingListItem(
-            amount=1,
-            unit="tsp",
-            shopping_list_id=2,  # Vegan Pancakes Ingredients
-            ingredient_id=7      # Baking Powder
-        ),
-        ShoppingListItem(
-            amount=0.5,
-            unit="cup",
-            shopping_list_id=2,  # Vegan Pancakes Ingredients
-            ingredient_id=8      # Cashew Yoghurt
-        ),
-        ShoppingListItem(
-            amount=20,
-            unit="mls",
-            shopping_list_id=2,  # Vegan Pancakes Ingredients
-            ingredient_id=9      # Maple Syrup
-        )
-    ]
-    db.session.add_all(shopping_list_items)
-    
-    # Commit changes to add ShoppingListItems
-    db.session.commit()
-
-    # Send an acknowledgment message
     print("Tables seeded")
 
 @db_commands.cli.command("drop")

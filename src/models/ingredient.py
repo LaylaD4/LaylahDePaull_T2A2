@@ -8,7 +8,6 @@ class Ingredient(db.Model):
 
     # Relationships
     recipe_ingredients = db.relationship("RecipeIngredient", back_populates="ingredient")
-    shopping_list_items = db.relationship("ShoppingListItem", back_populates="ingredient")
     
 
 # Ingredient Schema

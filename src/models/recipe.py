@@ -1,5 +1,6 @@
 from init import db, ma
 from marshmallow import fields
+from datetime import datetime, timezone
 
 class Recipe(db.Model):
     __tablename__ = "recipes"
@@ -8,7 +9,7 @@ class Recipe(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(100))
     is_predefined = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.Date)
+    created_at = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date())
     # Create Foreign Key that references 'users' table
     user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
 

@@ -19,7 +19,7 @@ class Recipe(db.Model):
 
 
 class RecipeSchema(ma.Schema):
-    user = fields.Nested("UserSchema", only=["user_id", "username"])
+    user = fields.Nested("UserSchema", only=["username"])
     ingredients = fields.List(fields.Nested("RecipeIngredientSchema", only=["ingredient", "amount", "unit"]))
 
     class Meta:

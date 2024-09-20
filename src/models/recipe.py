@@ -15,7 +15,7 @@ class Recipe(db.Model):
 
     # Relationships
     user = db.relationship("User", back_populates="recipes")
-    ingredients = db.relationship("RecipeIngredient", back_populates="recipe")
+    ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete")
 
 
 class RecipeSchema(ma.Schema):

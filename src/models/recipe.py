@@ -15,7 +15,7 @@ class Recipe(db.Model):
 
     # Relationships
     user = db.relationship("User", back_populates="recipes")
-    ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete")
+    ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete") # Change to recipe_ingredients, makes relationship clearer.
 
 
 class RecipeSchema(ma.Schema):
@@ -24,7 +24,7 @@ class RecipeSchema(ma.Schema):
 
     class Meta:
         fields = ("recipe_id", "name", "description", "is_predefined", "created_at", "user", "ingredients")
-    
+        ordered = True
 
 # To handle a single recipe object
 recipe_schema = RecipeSchema()

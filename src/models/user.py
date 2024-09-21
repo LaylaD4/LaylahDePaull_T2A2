@@ -15,12 +15,13 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
 
     # Relationships
-    recipes = db.relationship("Recipe", back_populates="user")
+    recipes = db.relationship("Recipe", back_populates="user", cascade="all, delete") # If a user gets deleted, all recipes will be deleted.
 
 # Create schema for users table
 class UserSchema(ma.Schema):
    class Meta:
         fields = ("user_id", "username", "email", "password", "created_at", "is_admin")
+        ordered = True
 
 # To handle a single user object
 user_schema = UserSchema(exclude=["password"])

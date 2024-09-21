@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from init import db
@@ -87,7 +87,7 @@ def create_recipe():
     return recipe_schema.dump(recipe), 201
 
 
-# /recipes/<id> - DELETE - delete a recipe
+# /recipes/<int:recipe_id> - DELETE - delete a recipe
 @recipe_bp.route("/<int:recipe_id>", methods=["DELETE"])
 @jwt_required()
 def delete_recipe(recipe_id):
@@ -121,7 +121,7 @@ def delete_recipe(recipe_id):
     return {"message": f"The recipe: {recipe.name} was successfully deleted."}, 200
    
 
-# /recipes/<recipe_id> - PUT, PATCH - edit a recipe: if you would like to add an ingredient, change an existing ingredients amount and/or unit, or change the recipe name or description.
+# /recipes/<int:recipe_id> - PUT, PATCH - edit a recipe: if you would like to add an ingredient, change an existing ingredients amount and/or unit, or change the recipe name or description.
 @recipe_bp.route("/<int:recipe_id>", methods=["PUT", "PATCH"])
 @jwt_required()
 def update_recipe(recipe_id):

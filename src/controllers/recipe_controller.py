@@ -121,82 +121,87 @@ def delete_recipe(recipe_id):
     return {"message": f"The recipe: {recipe.name} was successfully deleted."}, 200
    
 
-# /recipes/<int:recipe_id> - PUT, PATCH - edit a recipe: if you would like to add an ingredient, change an existing ingredients amount and/or unit, or change the recipe name or description.
+# /recipes/<int:recipe_id> - PUT, PATCH - edit a recipe: if you would like to add or delete an ingredient, change an existing ingredients amount and/or unit, or change the recipe name or description.
 @recipe_bp.route("/<int:recipe_id>", methods=["PUT", "PATCH"])
 @jwt_required()
 def update_recipe(recipe_id):
-    # Get the information from the body of the request
+    # Get the information from the request
     body_data = request.get_json()
-    
+
     # Fetch the recipe from the database
     stmt = db.select(Recipe).filter_by(recipe_id=recipe_id)
     recipe = db.session.scalar(stmt)
-    
-    # Check if the recipe exists
+
     if not recipe:
-        return {"error": f"The Recipe with the recipe_id of '{recipe_id}' was not found"}, 404
-    
+        return {"error": f"Recipe with the recip_id of '{recipe_id}' was not found"}, 404
+
     # Now get the user_id from the JWT token, to make sure they are authorised to update the recipe, eg they created it, and is NOT predefined.
     user_id = get_jwt_identity()
-
+    
     # Now fetch the user from the database
-    stmt = db.Select(User).filter_by(user_id=user_id)
+    stmt = db.select(User).filter_by(user_id=user_id)
     user = db.session.scalar(stmt)
 
-    # Check if the recipe is predefined, and the user is not an admin
+    # Check if the recipe is predifined, and the user is not admin
     if recipe.is_predefined and not user.is_admin:
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' is predefined; only admins can update predefined recipes."}, 403
-    
-    # Check if the user is the creator of the recipe or is_admin
+
+    # Check if the user is the creator of the recipe or is admin
     if recipe.user_id != user.user_id and not user.is_admin:
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' was not created by you; you can only update recipes that you yourself have created."}, 403
-    
+
     # If the user would like to update the name or description of the recipe, either or both, or none.
     if "name" in body_data:
         recipe.name = body_data.get("name")
     if "description" in body_data:
         recipe.description = body_data.get("description")
 
-    # If the user would like any ingredients of the recipe:
+    # If the user would like to add, update, or delete any ingredients
     ingredients = body_data.get("ingredients", [])
     for ingredient_data in ingredients:
         name = ingredient_data.get("name")
         amount = ingredient_data.get("amount")
         unit = ingredient_data.get("unit")
+        delete = ingredient_data.get("delete", False)
 
-    # Fetch the ingredient from database
-    stmt = db.select(Ingredient).filter_by(name=name)
-    ingredient = db.session.scalar(stmt)
+        # Fetch the ingredient from the database
+        stmt = db.select(Ingredient).filter_by(name=name)
+        ingredient = db.session.scalar(stmt)
+        
+        # If the ingredient does not already exist in the database, create it, and add plus commit to get ingredient_id
+        if not ingredient:
+            ingredient = Ingredient(name=name)
+            db.session.add(ingredient)
+            db.session.commit()  # Commit to get the new ingredient additions ingredient_id
 
-    # If the ingredient does not already exist in the database
-    if not ingredient:
-        ingredient = Ingredient(name=name)
-        db.session.add(ingredient)
-        db.session.commit() # Commit to get the new ingredient additions ingredient_id
-    
-    # Fetch the recipe-ingredient association from the database
-    stmt = db.select(RecipeIngredient).filter_by(recipe_id=recipe.recipe_id, ingredient_id=ingredient.ingredient_id)
-    recipe_ingredient = db.session.scalar(stmt)
+        # Fetch the recipe-ingredient association from the database
+        stmt = db.select(RecipeIngredient).filter_by(recipe_id=recipe.recipe_id, ingredient_id=ingredient.ingredient_id)
+        recipe_ingredient = db.session.scalar(stmt)
 
-    # If it exists, update the existing recipe-ingredient association's amount and unit if the user has provided it in request
-    if recipe_ingredient:
-        if amount is not None:
-            recipe_ingredient.amount = amount
-        if unit is not None:
-            recipe_ingredient.unit = unit
-    else:
-        # Create a new recipe-ingredient association if it doesn't exist
-        new_recipe_ingredient = RecipeIngredient(
-            recipe_id = recipe.recipe_id,
-            ingredient_id = ingredient.ingredient_id,
-            amount = amount,
-            unit = unit
-        )
-        db.session.add(new_recipe_ingredient)
-    
+        # If the user has delete set to true in request, delete the ingredient (recipe_ingredient) from recipe.
+        if delete:
+            if recipe_ingredient:
+                db.session.delete(recipe_ingredient)
+        else:
+            # If the recipe-ingredient association already exists, update the existing recipe-ingredient association's amount and unit, if the user has provided it in request
+            if recipe_ingredient:
+                if amount is not None:
+                    recipe_ingredient.amount = amount
+                if unit is not None:
+                    recipe_ingredient.unit = unit
+            # Otherwise add the new recipe-ingredient association to database (recipe_ingredients table) if it doesn't already exist        
+            else:
+                new_recipe_ingredient = RecipeIngredient(
+                    recipe_id=recipe.recipe_id,
+                    ingredient_id=ingredient.ingredient_id,
+                    amount=amount,
+                    unit=unit
+                )
+                db.session.add(new_recipe_ingredient)
+
     # Commit all changes
-    db.session.commit()
-
+    db.session.commit()  
+    # Return the update recipe
     return recipe_schema.dump(recipe), 200
 
 

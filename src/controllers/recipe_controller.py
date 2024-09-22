@@ -15,14 +15,30 @@ def get_all_recipes():
     stmt = db.select(Recipe)
     recipes = db.session.scalars(stmt)
     return recipes_schema.dump(recipes)
-
-# /recipes - GET - Fetch all recipes containing 'Vegan' in their name
+    
+# /recipes - GET - Fetch all recipes containing 'Vegan' in their description
 @recipe_bp.route("/vegan", methods=["GET"])
 def get_vegan_recipes():
-    # Use ilike for a case-insensitive search of 'Vegan' in the recipe name
-    stmt = db.select(Recipe).filter(Recipe.name.ilike("%Vegan%"))
+    # Use ilike for a case-insensitive search of 'Vegan' in the recipe description
+    stmt = db.select(Recipe).filter(Recipe.description.ilike("%Vegan%"))
     vegan_recipes = db.session.scalars(stmt)
     return recipes_schema.dump(vegan_recipes)
+
+# /recipes - GET - Fetch all recipes containing 'Keto' in their description
+@recipe_bp.route("/keto", methods=["GET"])
+def get_keto_recipes():
+    # Use ilike for a case-insensitive search of 'Keto' in the recipe description
+    stmt = db.select(Recipe).filter(Recipe.description.ilike("%Keto%"))
+    keto_recipes = db.session.scalars(stmt)
+    return recipes_schema.dump(keto_recipes)
+
+# /recipes - GET - Fetch all recipes containing 'Gluten Free' in their description
+@recipe_bp.route("/gluten-free", methods=["GET"])
+def get_gluten_free_recipes():
+    # Use ilike for a case-insensitive search of 'Gluten' in the recipe description
+    stmt = db.select(Recipe).filter(Recipe.description.ilike("%Gluten%"))
+    gluten_free_recipes = db.session.scalars(stmt)
+    return recipes_schema.dump(gluten_free_recipes)
 
 
 # /recipes/<id> - GET - fetch a specific recipe
@@ -133,7 +149,7 @@ def update_recipe(recipe_id):
     recipe = db.session.scalar(stmt)
 
     if not recipe:
-        return {"error": f"Recipe with the recip_id of '{recipe_id}' was not found"}, 404
+        return {"error": f"Recipe with the recipe_id of '{recipe_id}' was not found"}, 404
 
     # Now get the user_id from the JWT token, to make sure they are authorised to update the recipe, eg they created it, and is NOT predefined.
     user_id = get_jwt_identity()
@@ -142,7 +158,7 @@ def update_recipe(recipe_id):
     stmt = db.select(User).filter_by(user_id=user_id)
     user = db.session.scalar(stmt)
 
-    # Check if the recipe is predifined, and the user is not admin
+    # Check if the recipe is predefined, and the user is not admin
     if recipe.is_predefined and not user.is_admin:
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' is predefined; only admins can update predefined recipes."}, 403
 
@@ -156,13 +172,13 @@ def update_recipe(recipe_id):
     if "description" in body_data:
         recipe.description = body_data.get("description")
 
-    # If the user would like to add, update, or delete any ingredients
+    # If the user would like to add, update, or delete any ingredients, iterate through ingredient data.
     ingredients = body_data.get("ingredients", [])
     for ingredient_data in ingredients:
         name = ingredient_data.get("name")
         amount = ingredient_data.get("amount")
         unit = ingredient_data.get("unit")
-        delete = ingredient_data.get("delete", False)
+        delete = ingredient_data.get("delete", False) # If delete is not provided in body_data, it defaults to False
 
         # Fetch the ingredient from the database
         stmt = db.select(Ingredient).filter_by(name=name)
@@ -172,13 +188,13 @@ def update_recipe(recipe_id):
         if not ingredient:
             ingredient = Ingredient(name=name)
             db.session.add(ingredient)
-            db.session.commit()  # Commit to get the new ingredient additions ingredient_id
+            db.session.commit() 
 
         # Fetch the recipe-ingredient association from the database
         stmt = db.select(RecipeIngredient).filter_by(recipe_id=recipe.recipe_id, ingredient_id=ingredient.ingredient_id)
         recipe_ingredient = db.session.scalar(stmt)
 
-        # If the user has delete set to true in request, delete the ingredient (recipe_ingredient) from recipe.
+        # If the user has delete set to true in request, and recipe-ingredient association exists, delete the ingredient (recipe_ingredient) from recipe.
         if delete:
             if recipe_ingredient:
                 db.session.delete(recipe_ingredient)

@@ -9,6 +9,7 @@ from init import db, ma, bcrypt, jwt
 from controllers.cli_controllers import db_commands
 from controllers.auth_controller import auth_bp
 from controllers.recipe_controller import recipe_bp
+from controllers.user_recipe_controller import user_recipe_bp
 
 # Create (define) a flask app inside a function (Application factories)
 def create_app():
@@ -26,5 +27,6 @@ def create_app():
     app.register_blueprint(db_commands)
     app.register_blueprint(auth_bp)
     app.register_blueprint(recipe_bp)
+    app.register_blueprint(user_recipe_bp)
 
     return app

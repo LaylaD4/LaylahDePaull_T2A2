@@ -16,7 +16,7 @@ class Recipe(db.Model):
     # Relationships
     user = db.relationship("User", back_populates="recipes")
     ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete") # Change to recipe_ingredients, makes relationship clearer.
-
+    user_recipes = db.relationship("UserRecipe", back_populates="recipe", cascade="delete, all")
 
 class RecipeSchema(ma.Schema):
     user = fields.Nested("UserSchema", only=["username"])

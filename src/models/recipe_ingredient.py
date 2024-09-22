@@ -21,6 +21,6 @@ class RecipeIngredientSchema(ma.Schema):
     ingredient = fields.Nested("IngredientSchema", only=["name"])
 
     class Meta:
-        fields = ("recipe_ingredient_id", "ingredient", "amount", "unit")
+        fields = ("ingredient", "amount", "unit")
 
 

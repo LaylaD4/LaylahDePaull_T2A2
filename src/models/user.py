@@ -16,6 +16,7 @@ class User(db.Model):
 
     # Relationships
     recipes = db.relationship("Recipe", back_populates="user", cascade="all, delete") # If a user gets deleted, all recipes will be deleted.
+    user_recipes = db.relationship("UserRecipe", back_populates="user", cascade="all, delete") # If a user gets deleted, all user_recipes will be deleted.
 
 # Create schema for users table
 class UserSchema(ma.Schema):

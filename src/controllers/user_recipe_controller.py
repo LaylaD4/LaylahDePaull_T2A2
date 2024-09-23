@@ -2,8 +2,8 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from init import db
-from models.user_recipe import UserRecipe, UserRecipeSchema 
-from models.recipe import Recipe, RecipeSchema 
+from models.user_recipe import UserRecipe, UserRecipeSchema, user_recipes_schema
+from models.recipe import Recipe
 
 user_recipe_bp = Blueprint("user_recipes", __name__, url_prefix="/user-recipes")
 
@@ -80,18 +80,16 @@ def get_shopping_list():
     # Create a list to store all shopping list ingredients
     ingredients_list = []
 
-    # Loop through each user recipe
-    for user_recipe in user_recipes:
-        # Fetch the recipe using the recipe_id from the user_recipe
-        stmt = db.select(Recipe).filter_by(recipe_id=user_recipe.recipe_id)
-        recipe = db.session.scalar(stmt)
+    # Use UserRecipeSchema to serialise user recipes and get ingredients
+    user_recipe_data = user_recipes_schema.dump(user_recipes)
+    
+    # Loop through serialised user recipes to gather ingredients
+    for user_recipe in user_recipe_data:
+        recipe_ingredients = user_recipe['recipe'].get("ingredients", [])
+        ingredients_list.append(recipe_ingredients)  # Add ingredients to the list
 
-        # If there is a recipe, use the RecipeSchema to get the recipes ingredients
-        if recipe:  
-            recipe_data = RecipeSchema().dump(recipe)
-            ingredients_list.append(recipe_data.get("ingredients", []))  # Add ingredients of the recipe to the ingredients_list
+    return {"Shopping List Items": ingredients_list}, 200
 
-    return {"Shopping List Items": ingredients_list}, 200 
 
 
 # /user-recipes/<int:recipe_id> - DELETE - delete a recipe from a users recipe list.

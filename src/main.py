@@ -1,5 +1,6 @@
 import os
 from flask import Flask
+from marshmallow.exceptions import ValidationError
 
 
 # For flask app, need to import the previously initialised (in init.py) instances or objects of:
@@ -17,6 +18,11 @@ def create_app():
     app.json.sort_keys = False
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
+
+    # Validation errors (made by end-user) - function to handle errors
+    @app.errorhandler(ValidationError)
+    def validation_error(err):
+        return {"error": err.messages}, 400
     
     db.init_app(app)
     ma.init_app(app)

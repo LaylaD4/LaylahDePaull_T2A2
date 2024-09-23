@@ -1,5 +1,5 @@
 from init import db, ma
-from marshmallow import fields
+from marshmallow import fields, validate
 
 # Intermediary table for many-to-many relationship between Recipe and Ingredients
 class RecipeIngredient(db.Model):
@@ -19,8 +19,12 @@ class RecipeIngredient(db.Model):
 
 class RecipeIngredientSchema(ma.Schema):
     ingredient = fields.Nested("IngredientSchema", only=["name"])
+    delete = fields.Boolean(missing=False)
+    # Validate
+    amount = fields.Float(required=True, validate=validate.Range(min=0, error="Please enter an amount that is a positive number."))
+    unit = fields.String(required=True, validate=validate.Length(min=1, error="The unit of the ingredient you are entering must be at least 1 character long."))
 
     class Meta:
-        fields = ("ingredient", "amount", "unit")
+        fields = ("ingredient", "amount", "unit", "delete")
 
 

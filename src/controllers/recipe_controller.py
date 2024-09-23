@@ -56,8 +56,8 @@ def get_a_recipe(recipe_id):
 @recipe_bp.route("/", methods=["POST"])
 @jwt_required() 
 def create_recipe():
-    # Get the data from the body of the request
-    body_data = request.get_json()
+    # Get the data from the body of the request - note: wrapped request.get_json() in: recipe_schema.load() for validation.
+    body_data = recipe_schema.load(request.get_json())
 
     # Create a new recipe with the user ID from JWT
     recipe = Recipe(
@@ -74,7 +74,7 @@ def create_recipe():
     # Now need to handle the ingredients that go into the recipe
     ingredients = body_data.get("ingredients", [])
     for ingredient_data in ingredients:
-        name = ingredient_data.get("name")
+        name = ingredient_data["ingredient"].get("name")
         amount = ingredient_data.get("amount")
         unit = ingredient_data.get("unit")
 
@@ -141,8 +141,8 @@ def delete_recipe(recipe_id):
 @recipe_bp.route("/<int:recipe_id>", methods=["PUT", "PATCH"])
 @jwt_required()
 def update_recipe(recipe_id):
-    # Get the information from the request
-    body_data = request.get_json()
+    # Get the information from the request - Need to accept partial inputs, as only editing parts of recipe.
+    body_data = recipe_schema.load(request.get_json(), partial=True)
 
     # Fetch the recipe from the database
     stmt = db.select(Recipe).filter_by(recipe_id=recipe_id)
@@ -172,19 +172,31 @@ def update_recipe(recipe_id):
     if "description" in body_data:
         recipe.description = body_data.get("description")
 
-    # If the user would like to add, update, or delete any ingredients, iterate through ingredient data.
+    # If the user would like to add, update, or delete any ingredients, iterate through ingredient data (json request).
     ingredients = body_data.get("ingredients", [])
     for ingredient_data in ingredients:
-        name = ingredient_data.get("name")
-        amount = ingredient_data.get("amount")
-        unit = ingredient_data.get("unit")
         delete = ingredient_data.get("delete", False) # If delete is not provided in body_data, it defaults to False
+        
+        # If deleting an ingredient from a recipe, or updating a recipe's amount must make sure the user has included the ingredients name
+        if delete:
+            if "ingredient" not in ingredient_data or "name" not in ingredient_data["ingredient"]:
+                return {"error": "The ingredients name must be provided, for the ingredient to be deleted."}, 400
+            name = ingredient_data["ingredient"].get("name")
+        # If not deleting an ingredient, just updating an ingredient:
+        else:
+            # Can not update an ingredient, if a name is not provided
+            if "ingredient" not in ingredient_data or "name" not in ingredient_data["ingredient"]:
+                return {"error": "The ingredients name must be provided, for the ingredient's amount or unit to be updated."}, 400
+            name = ingredient_data["ingredient"].get("name")
+            amount = ingredient_data.get("amount")
+            unit = ingredient_data.get("unit")
 
-        # Fetch the ingredient from the database
+
+        # Fetch the ingredient from the database, search by name
         stmt = db.select(Ingredient).filter_by(name=name)
         ingredient = db.session.scalar(stmt)
         
-        # If the ingredient does not already exist in the database, create it, and add plus commit to get ingredient_id
+        # If the ingredient does not already exist in the database, create it, and add plus commit to get the ingredient_id
         if not ingredient:
             ingredient = Ingredient(name=name)
             db.session.add(ingredient)

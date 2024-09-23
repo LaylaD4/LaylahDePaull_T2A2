@@ -1,4 +1,5 @@
 from init import db, ma
+from marshmallow import fields, validate
 
 class Ingredient(db.Model):
     __tablename__ = "ingredients"
@@ -12,5 +13,7 @@ class Ingredient(db.Model):
 
 # Ingredient Schema
 class IngredientSchema(ma.Schema):
+    # Validate
+    name = fields.String(required=True, validate=validate.Length(min=2, error="Please add the ingredient's name."))
     class Meta:
         fields = ("ingredient_id", "name")

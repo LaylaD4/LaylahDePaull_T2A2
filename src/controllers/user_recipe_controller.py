@@ -33,7 +33,7 @@ def add_user_recipe():
     stmt = db.select(UserRecipe).filter_by(user_id=user_id, recipe_id=recipe_id)
     existing_recipe = db.session.scalar(stmt)
     if existing_recipe:
-        return {"message": f"You already have the recipe with recipe_id of '{recipe_id}' in your recipe list"}, 409
+        return {"message": f"You already have the recipe with recipe_id of '{recipe_id}' in your shopping list"}, 409
 
 
     # If the recipe exists, create a new UserRecipe instance
@@ -56,7 +56,7 @@ def get_user_recipes():
 
     # Check if user has any recipes in their list
     if not user_recipes:
-        return {"message": "You currently have no recipes stored in your list."}, 200
+        return {"message": "You currently have no recipes stored in your shopping list."}, 200
     
     # Create a new schema instance to retreive or serialise only the recipe's name
     user_recipe_name_schema = UserRecipeSchema(only=["recipe.name"])
@@ -75,7 +75,7 @@ def get_shopping_list():
 
     # Check if the user has any recipes in their list
     if not user_recipes:
-        return {"message": "You currently have no recipes stored in your list."}, 200
+        return {"message": "You currently have no recipes stored in your shopping list."}, 200
 
     # Create a list to store all shopping list ingredients
     ingredients_list = []

@@ -1,7 +1,9 @@
 from init import db, ma
 from marshmallow import fields, validate
 from datetime import datetime, timezone
-from marshmallow.validate import Length, And, Regexp
+from marshmallow.validate import Length, And, Regexp, OneOf
+
+VALID_DESCRIPTIONS = ("Keto", "Vegan", "Paleo", "Standard", "Vegetarian", "Low Carb", "Pescatarian")
 
 class Recipe(db.Model):
     __tablename__ = "recipes"
@@ -24,8 +26,8 @@ class RecipeSchema(ma.Schema):
     ingredients = fields.List(fields.Nested("RecipeIngredientSchema", only=["ingredient", "amount", "unit", "delete"]))
 
     # Validation: name, description
-    name = fields.String(required=True, validate=Length(min=4, error="The name of the recipe must be at least 4 characters long."))
-    description = fields.String(required=True, validate=Length(min=4, error="The description of the recipe must be at least 4 characters long, please add keywords like Keto, Vegan, Gluten Free, to describe your recipe."))
+    name = fields.String(required=True, validate=And(Length(min=4, error="The name of the recipe must be at least 4 characters long."), Regexp("^[A-Z][A-Za-z0-9 ]+$", error="The recipe name must start with a capital letter, and have alphanumeric characters.")))
+    description = fields.String(required=True, validate=OneOf(VALID_DESCRIPTIONS))
 
     class Meta:
         fields = ("recipe_id", "name", "description", "is_predefined", "created_at", "user", "ingredients")

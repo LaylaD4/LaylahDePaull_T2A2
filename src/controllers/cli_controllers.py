@@ -56,14 +56,14 @@ def seed_tables():
     recipes = [
         Recipe(
             name="Keto Pancakes",
-            description="Breakfast, Keto, Gluten Free",
+            description="Keto",
             is_predefined=True,
             # user_id=1  # Admin
             user = users[0] # Admin
         ),
         Recipe(
             name="Vegan Pancakes",
-            description="Breakfast, Vegan, Gluten Free, Dairy Free",
+            description="Vegan",
             is_predefined=True,
             # user_id=1  # Admin
             user = users[0] # Admin

@@ -6,6 +6,7 @@ from models.recipe import Recipe, recipe_schema, recipes_schema
 from models.ingredient import Ingredient
 from models.recipe_ingredient import RecipeIngredient
 from models.user import User
+from utils import authorise_as_admin
 
 recipe_bp = Blueprint("recipes", __name__, url_prefix="/recipes")
 
@@ -107,12 +108,11 @@ def create_recipe():
 @recipe_bp.route("/<int:recipe_id>", methods=["DELETE"])
 @jwt_required()
 def delete_recipe(recipe_id):
-    # First get the user_id from the JWT token, to make sure they are authorised to delete recipe, eg they created it, and is NOT predefined.
-    user_id = get_jwt_identity()
+    # Get the current_user_id from the JWT token, to make sure they are authorised to delete recipe, eg they created it, and is NOT predefined.
+    current_user_id = int(get_jwt_identity()) # Need to convert to int (as token is str)
 
-    # Now fetch the user from the database
-    stmt = db.Select(User).filter_by(user_id=user_id)
-    user = db.session.scalar(stmt)
+    # Check if the user is admin
+    is_admin = authorise_as_admin()
 
     # fetch recipe from database
     stmt = db.select(Recipe).filter_by(recipe_id=recipe_id)
@@ -123,12 +123,12 @@ def delete_recipe(recipe_id):
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' was not found"}, 404
     
     # Check if the recipe is predefined, and the user is not an admin
-    if recipe.is_predefined and not user.is_admin:
+    if recipe.is_predefined and not is_admin:
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' is predefined; only admins can delete predefined recipes."}, 403
     
     
     # Check if the user is the creator of the recipe or is_admin
-    if recipe.user_id != user.user_id and not user.is_admin:
+    if recipe.user_id != current_user_id and not is_admin:
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' was not created by you; you can only delete recipes that you yourself have created."}, 403
 
     # Delete recipe
@@ -152,18 +152,17 @@ def update_recipe(recipe_id):
         return {"error": f"Recipe with the recipe_id of '{recipe_id}' was not found"}, 404
 
     # Now get the user_id from the JWT token, to make sure they are authorised to update the recipe, eg they created it, and is NOT predefined.
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity()) # Token is string, needs to be converted to int
     
-    # Now fetch the user from the database
-    stmt = db.select(User).filter_by(user_id=user_id)
-    user = db.session.scalar(stmt)
+    # Check if the user is admin
+    is_admin = authorise_as_admin()
 
     # Check if the recipe is predefined, and the user is not admin
-    if recipe.is_predefined and not user.is_admin:
+    if recipe.is_predefined and not is_admin:
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' is predefined; only admins can update predefined recipes."}, 403
 
     # Check if the user is the creator of the recipe or is admin
-    if recipe.user_id != user.user_id and not user.is_admin:
+    if recipe.user_id != user_id and not is_admin:
         return {"error": f"The Recipe with the recipe_id of '{recipe_id}' was not created by you; you can only update recipes that you yourself have created."}, 403
 
     # If the user would like to update the name or description of the recipe, either or both, or none.

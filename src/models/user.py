@@ -1,5 +1,4 @@
 from init import db, ma
-# Importing datetime and timezone to handle date and time, including UTC timestamps 
 from datetime import datetime, timezone
 from marshmallow import fields, validate
 from marshmallow.validate import Length, And, Regexp

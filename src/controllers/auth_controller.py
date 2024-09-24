@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from models.user import User, user_schema, users_schema
+from models.user import User, user_schema, users_schema, UserSchema
 from init import bcrypt, db
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
@@ -8,12 +8,13 @@ from datetime import timedelta
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-# /auth/register - POST - Register a user account
+# /auth/register - POST - Register a new user account
 @auth_bp.route("/register", methods=["POST"])
 def register_user():
     try:
         # Get the data from the body of the request
-        body_data = request.get_json()
+        body_data = UserSchema().load(request.get_json()) # Need to validate, however need password too (excluded in user_schema)
+        
         # Create a user instance from the User model
         user = User(
             username = body_data.get("username"),
@@ -52,8 +53,8 @@ def login_user():
         return {"error": "Invalid email or password was entered."}, 400
 
 
-# /auth - GET - Retrieve all users that currently have accounts, only admin is permitted to do this.
-@auth_bp.route("/", methods=["GET"])
+# /auth/users - GET - Retrieve all users that currently have accounts, only admin is permitted to do this.
+@auth_bp.route("/users", methods=["GET"])
 @jwt_required()
 def get_all_users():
     # Get the user_id from the current user
@@ -74,8 +75,8 @@ def get_all_users():
 
 
 # Delete User - Need to cascade, and delete all user recipes, when a user is deleted.
-# /auth/<int:user_id> - DELETE - Register a user account
-@auth_bp.route("/<int:user_id>", methods=["DELETE"])
+# /auth/users/<int:user_id> - DELETE - Register a user account
+@auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(user_id):
     # First get the user_id from JWT token of the user making the request
@@ -102,55 +103,32 @@ def delete_user(user_id):
         return {"message": f"You do not have permission to delete the user with the user_id of '{user_id}' and name {user.username}, you only have permission to delete your own account."}, 403
     
 
-# Update User, eg; email, username, or password
-# /auth/<int:user_id> - PUT, PATCH - Edit a user's account, eg; username, email, password.
-@auth_bp.route("/<int:user_id>", methods=["PUT", "PATCH"])
+# /auth/users - PUT, PATCH - Edit a user's account, eg; username, email, password.
+@auth_bp.route("/users", methods=["PUT", "PATCH"])
 @jwt_required()
-def update_user(user_id):
-    # First get the user_id from JWT token of the user making the request to update
-    current_user_id = get_jwt_identity()
-
-    # Need to fetch the current users details from the database, in particular the attribute is_admin to make a check below
-    stmt = db.select(User).filter_by(user_id=current_user_id)
-    current_user = db.session.scalar(stmt)
-
-    # Need to fetch the user with user_id from the database that is to be updated
-    stmt = db.select(User).filter_by(user_id=user_id)
+def update_user():
+    # Fetch the body of the request
+    body_data = UserSchema().load(request.get_json(), partial=True) # We may not be updating all fields.
+    # Get password, if user is updating
+    password = body_data.get("password")
+    # Fetch the user from the database
+    stmt = db.select(User).filter_by(user_id=get_jwt_identity())
     user = db.session.scalar(stmt)
 
-    # Need to check first if the user even exists
-    if not user:
-        return {"error": f"User with the user_id of '{user_id}' was not found."}, 404
-    
-    # Update the details of the user with user_id only if the user owns the account, or is admin
-    if current_user.user_id == user.user_id or current_user.is_admin:
-        # Get the details from the body of the request
-        body_data = request.get_json()
-
-        # Update the username if requested
-        if "username" in body_data:
-            user.username = body_data.get("username")
-        
-        # Update the email if requested
-        if "email" in body_data:
-            user.email = body_data.get("email")
-
-        # Update the password if requested
-        if "password" in body_data:
-            password = body_data.get("password")
+    # Check if the user exists:
+    if user:
+        # If the user wants to update their username or not
+        user.username = body_data.get("username") or user.username
+        # If the user wants to update their password
+        if password:
             # Hash the password
-            if password:
-                user.password = bcrypt.generate_password_hash(password).decode("utf-8")
-
-        # Add and commit the changes
-        db.session.add(user)
+            user.password = bcrypt.generate_password_hash(password).decode("utf-8")
+        
+        # Commit the changes
         db.session.commit()
-
-        return {"message": f"You have successfully updated the user with user_id of '{user_id}'"}, 200
+        return user_schema.dump(user)
     else:
-        return {"message": f"You do not have permission to update the user with the user_id of '{user_id}' and name {user.username}, you only have permission to update your own account details."}, 403
-    
-
-
+        # If the user doesn't exist:
+        return {"error": "The user does not exist."}
 
 

@@ -1,7 +1,8 @@
 from init import db, ma
 # Importing datetime and timezone to handle date and time, including UTC timestamps 
 from datetime import datetime, timezone
-from marshmallow import fields
+from marshmallow import fields, validate
+from marshmallow.validate import Length, And, Regexp
 
 
 # Create model for users table
@@ -20,7 +21,19 @@ class User(db.Model):
 
 # Create schema for users table
 class UserSchema(ma.Schema):
-   class Meta:
+    username = fields.String(required=True, validate=validate.Length(min=4, error="Your username must be at least 4 characters long."))
+    email = fields.String(required=True, validate=validate.Email(error="Your email address must be in a valid format, eg; name@example.com."))
+    password = fields.String(
+        required=True,
+        validate=And(
+            Length(min=6, error="Your password must be at least 6 characters long."),
+            Regexp("^[A-Z].*$", error="Your password must start with an uppercase letter."),
+            Regexp(".*\\d.*$", error="Your password must contain at least one number."),
+            Regexp(".*[&*#@!$%^&*()_+={}\\[\\]:;\"'<>,.?/~`-].*$", error="Your password must contain at least one special character, eg; &, $, !.")
+        )
+    )
+
+    class Meta:
         fields = ("user_id", "username", "email", "password", "created_at", "is_admin")
         ordered = True
 

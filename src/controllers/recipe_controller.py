@@ -79,11 +79,10 @@ def create_recipe():
     # Add the recipe to the session and commit to generate the necessary recipe_id value
     db.session.add(recipe)
     db.session.commit()
-    print(f"Recipe ID: {recipe.recipe_id}")
 
     # Now need to handle the ingredients that go into the recipe
-    ingredients = body_data.get("ingredients", [])
-    for ingredient_data in ingredients:
+    recipe_ingredients = body_data.get("recipe_ingredients", [])
+    for ingredient_data in recipe_ingredients:
         name = ingredient_data["ingredient"].get("name")
         amount = ingredient_data.get("amount")
         unit = ingredient_data.get("unit")
@@ -181,8 +180,8 @@ def update_recipe(recipe_id):
         recipe.description = body_data.get("description")
 
     # If the user would like to add, update, or delete any ingredients, iterate through ingredient data (json request).
-    ingredients = body_data.get("ingredients", [])
-    for ingredient_data in ingredients:
+    recipe_ingredients = body_data.get("recipe_ingredients", [])
+    for ingredient_data in recipe_ingredients:
         delete = ingredient_data.get("delete", False) # If delete is not provided in body_data, it defaults to False
         
         # If deleting an ingredient from a recipe, or updating a recipe's amount must make sure the user has included the ingredients name

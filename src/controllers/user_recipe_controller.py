@@ -85,7 +85,7 @@ def get_shopping_list():
     
     # Loop through serialised user recipes to gather ingredients
     for user_recipe in user_recipe_data:
-        recipe_ingredients = user_recipe['recipe'].get("ingredients", [])
+        recipe_ingredients = user_recipe['recipe'].get("recipe_ingredients", [])
         ingredients_list.append(recipe_ingredients)  # Add ingredients to the list
 
     return {"Shopping List Items": ingredients_list}, 200

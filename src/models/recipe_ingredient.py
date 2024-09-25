@@ -2,7 +2,7 @@ from init import db, ma
 from marshmallow import fields, validate
 from marshmallow.validate import Length, And, Regexp, Range
 
-# Intermediary table for many-to-many relationship between Recipe and Ingredients
+# Junction table for many-to-many relationship between Recipe and Ingredients
 class RecipeIngredient(db.Model):
     __tablename__ = "recipe_ingredients"
     recipe_ingredient_id = db.Column(db.Integer, primary_key=True)
@@ -14,7 +14,7 @@ class RecipeIngredient(db.Model):
     ingredient_id = db.Column(db.Integer, db.ForeignKey("ingredients.ingredient_id"), nullable=False)
 
     # Relationships
-    recipe = db.relationship("Recipe", back_populates="ingredients")
+    recipe = db.relationship("Recipe", back_populates="recipe_ingredients")
     ingredient = db.relationship("Ingredient", back_populates="recipe_ingredients")
 
 

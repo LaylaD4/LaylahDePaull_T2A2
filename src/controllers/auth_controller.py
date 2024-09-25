@@ -96,7 +96,7 @@ def delete_user(user_id):
         return {"error": f"No user found with user_id '{user_id}'."}, 404
     
 
-# /auth/users - PUT, PATCH - Edit a user's account, eg; username, email, password.
+# /auth/users - PUT, PATCH - Edit a user's account, only; username, password.
 @auth_bp.route("/users", methods=["PUT", "PATCH"])
 @jwt_required()
 def update_user():
@@ -131,5 +131,39 @@ def update_user():
     else:
         # If the user doesn't exist:
         return {"error": "The user does not exist."}, 404
+
+# /auth/users/<int:user_id> - PUT, PATCH - Admin only; to edit a user's account details, that is; username, email, and is_admin
+@auth_bp.route("/users/<int:user_id>", methods=["PUT", "PATCH"])
+@jwt_required()
+@auth_as_admin_decorator
+def admin_update_user(user_id):
+    # Fetch the body of the request
+    body_data = UserSchema().load(request.get_json(), partial=True) # We may not be updating all fields.
+
+    if "password" in body_data:
+        return {"error": "You are not allowed to change a users password."}, 403
+
+    # Fetch the user from the database that is to be updated
+    stmt = db.select(User).filter_by(user_id=user_id)
+    user = db.session.scalar(stmt)
+
+    # Check if the user exists:
+    if user:
+        # If updating user's username or not:
+        user.username = body_data.get("username") or user.username
+        # If udating user's email or not:
+        user.email = body_data.get("email") or user.email
+        # If updating user's is_admin status to true or false:
+        if "is_admin" in body_data:
+            user.is_admin = body_data["is_admin"]
+
+        # Commit the changes
+        db.session.commit()
+        return user_schema.dump(user)
+    else:
+        # If the user doesn't exist:
+        return {"error": f"The user with the user_id of '{user_id}' does not exist."}, 404
+
+
 
 

@@ -18,34 +18,33 @@ class Recipe(db.Model):
 
     # Relationships
     user = db.relationship("User", back_populates="recipes")
-    ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete") # Change to recipe_ingredients, makes relationship clearer.
+    recipe_ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete")
     user_recipes = db.relationship("UserRecipe", back_populates="recipe", cascade="delete, all")
 
 class RecipeSchema(ma.Schema):
     user = fields.Nested("UserSchema", only=["username"])
-    ingredients = fields.List(fields.Nested("RecipeIngredientSchema", only=["ingredient", "amount", "unit", "delete"]))
+    recipe_ingredients = fields.List(fields.Nested("RecipeIngredientSchema", only=["ingredient", "amount", "unit", "delete"]))
 
     # Validation: name, description
     name = fields.String(required=True, validate=And(Length(min=4, error="The name of the recipe must be at least 4 characters long."), Regexp("^[A-Z][A-Za-z0-9 ]+$", error="The recipe name must start with a capital letter, and have alphanumeric characters.")))
-    # description = fields.String(required=True, validate=OneOf(VALID_DESCRIPTIONS))
     description = fields.String(required=True)
 
-    # Makes sure only 
+    # Makes sure only (description) :
     @validates("description")
     def validate_description(self, value):
         # Split the given description into individual words
         words = value.split(", ")
         
-        # Ensure each word is valid and capitalised
+        # Ensure each word is valid and capitalised, separated by a comma (,)
         for word in words:
             if word not in VALID_DESCRIPTIONS:
                 raise ValidationError(f"The '{word}' is not a valid description for a Recipe. The only valid options are: {', '.join(VALID_DESCRIPTIONS)}. Please pick one or more that accurately describes your Recipe. Note; The descriptions are case sensitive, and use a comma (,) to separate each word eg; 'Gluten Free, Keto'.")
         
-        # Return value if valid
+        # If the value is valid - return
         return value
 
     class Meta:
-        fields = ("recipe_id", "name", "description", "is_predefined", "created_at", "user", "ingredients")
+        fields = ("recipe_id", "name", "description", "is_predefined", "created_at", "user", "recipe_ingredients")
         ordered = True
 
 # To handle a single recipe object

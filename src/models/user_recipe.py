@@ -17,7 +17,7 @@ class UserRecipe(db.Model):
 
 # Create schema for UserRecipe 
 class UserRecipeSchema(ma.Schema):
-    recipe = fields.Nested("RecipeSchema", only=["name", "description", "ingredients"])
+    recipe = fields.Nested("RecipeSchema", only=["name", "description", "recipe_ingredients"])
 
     class Meta:
         fields = ("user_recipe_id", "recipe")

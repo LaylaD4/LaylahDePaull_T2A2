@@ -44,6 +44,11 @@ def create_app():
     def not_found(err):
         return {"error": "The requested information was not found."}, 404
     
+    # Global error handler, whenever a method is not allowed - 405 error
+    @app.errorhandler(405)
+    def method_not_allowed(err):
+        return {"error": "The method is not allowed for the requested URL."}, 405
+    
     # Global error handler, whenever there is information given that can not be processed - 422 error.
     @app.errorhandler(422)
     def unprocessable_entity(err):

@@ -5,6 +5,7 @@ import functools
 from init import db
 from models.user import User
 
+# Creating a function to check is a user is admin
 def authorise_as_admin():
     # Get the user_id from get_jwt_identity
     user_id = get_jwt_identity()
@@ -14,7 +15,7 @@ def authorise_as_admin():
     # Check whether the user is admin or not
     return user.is_admin
 
-# Creating a decorator for authorise_as_admin
+# Creating a decorator for authorise_as_admin, to use for functions that only allow admins
 def auth_as_admin_decorator(fn):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):

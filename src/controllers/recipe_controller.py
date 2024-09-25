@@ -22,7 +22,10 @@ def get_all_recipes():
 def get_vegan_recipes():
     # Use ilike for a case-insensitive search of 'Vegan' in the recipe description
     stmt = db.select(Recipe).filter(Recipe.description.ilike("%Vegan%"))
-    vegan_recipes = db.session.scalars(stmt)
+    vegan_recipes = db.session.scalars(stmt).all()
+    if not vegan_recipes: 
+        return {"message": "Currently, there are no Vegan recipes in the Meal Planner database"}
+    # Return all Vegan recipes
     return recipes_schema.dump(vegan_recipes)
 
 # /recipes - GET - Fetch all recipes containing 'Keto' in their description
@@ -30,7 +33,10 @@ def get_vegan_recipes():
 def get_keto_recipes():
     # Use ilike for a case-insensitive search of 'Keto' in the recipe description
     stmt = db.select(Recipe).filter(Recipe.description.ilike("%Keto%"))
-    keto_recipes = db.session.scalars(stmt)
+    keto_recipes = db.session.scalars(stmt).all()
+    if not keto_recipes:
+        return {"message": "Currently, there are no Keto recipes in the Meal Planner database"}
+    # Return all Keto recipes
     return recipes_schema.dump(keto_recipes)
 
 # /recipes - GET - Fetch all recipes containing 'Gluten Free' in their description
@@ -38,7 +44,10 @@ def get_keto_recipes():
 def get_gluten_free_recipes():
     # Use ilike for a case-insensitive search of 'Gluten' in the recipe description
     stmt = db.select(Recipe).filter(Recipe.description.ilike("%Gluten%"))
-    gluten_free_recipes = db.session.scalars(stmt)
+    gluten_free_recipes = db.session.scalars(stmt).all()
+    if not gluten_free_recipes:
+        return {"message": "Currently, there are no Gluten Free recipes in the Meal Planner database"}
+    # Return all Gluten Free recipes
     return recipes_schema.dump(gluten_free_recipes)
 
 

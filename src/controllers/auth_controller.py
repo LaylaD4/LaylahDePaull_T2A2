@@ -102,6 +102,14 @@ def delete_user(user_id):
 def update_user():
     # Fetch the body of the request
     body_data = UserSchema().load(request.get_json(), partial=True) # We may not be updating all fields.
+
+    # Check if the user is trying to change their email - Not 
+    if "email" in body_data:
+        return {"error": "Please contact us at: admin@mealplanner.com, if you would like to change your email address."}, 403
+    
+    if "is_admin" in body_data:
+        return {"error": "You are not allowed to change your admin status."}, 403
+    
     # Get password, if user is updating
     password = body_data.get("password")
     # Fetch the user from the database
@@ -122,6 +130,6 @@ def update_user():
         return user_schema.dump(user)
     else:
         # If the user doesn't exist:
-        return {"error": "The user does not exist."}
+        return {"error": "The user does not exist."}, 404
 
 

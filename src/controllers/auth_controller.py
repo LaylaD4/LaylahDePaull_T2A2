@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from datetime import timedelta
-from utils import authorise_as_admin
+from utils import authorise_as_admin, auth_as_admin_decorator
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -54,20 +54,11 @@ def login_user():
         return {"error": "Invalid email or password was entered."}, 400
 
 
-# /auth/users - GET - Retrieve all users that currently have accounts, only admin is permitted to do this.
+# /auth/users - GET - Retrieve all users that currently have accounts, only admin is permitted to do this; using @auth_as_admin_decorator to make check.
 @auth_bp.route("/users", methods=["GET"])
 @jwt_required()
+@auth_as_admin_decorator
 def get_all_users():
-    # Get the user_id from the current user
-    user_id = get_jwt_identity()
-
-    # Check if the current user is admin using authorise_as_admin function in utils.py
-    is_admin = authorise_as_admin()
-
-    # Check if the current user is admin
-    if not is_admin:
-        return {"message": "You do not have permission to view all user's accounts."}, 403
-    
     # Fetch all current users from the database
     stmt = db.select(User)
     users = db.session.scalars(stmt)
@@ -103,7 +94,7 @@ def delete_user(user_id):
     else:
         # Return an error if the user with user_id does not exist
         return {"error": f"No user found with user_id '{user_id}'."}, 404
-
+    
 
 # /auth/users - PUT, PATCH - Edit a user's account, eg; username, email, password.
 @auth_bp.route("/users", methods=["PUT", "PATCH"])

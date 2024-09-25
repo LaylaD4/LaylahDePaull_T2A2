@@ -21,13 +21,13 @@ def seed_tables():
         User(
             username="layla_admin",
             email="admin@mealplanner.com",
-            password=bcrypt.generate_password_hash("123456").decode("utf-8"),
+            password=bcrypt.generate_password_hash("Abc&123").decode("utf-8"),
             is_admin=True
         ),
         User(
             username="elise04",
             email="elisebc04@email.com",
-            password=bcrypt.generate_password_hash("qwerty12").decode("utf-8")
+            password=bcrypt.generate_password_hash("Cde&456").decode("utf-8")
         )
     ]
 

@@ -1,0 +1,35 @@
+# DOCUMENTATION
+
+## R1. Explain the problem that this app will solve, and explain how this app solves or addresses the problem.
+
+My API is designed to help people plan and prepare healthy, home-cooked meals more easily. In Australia, approximately 13 million adults and 1.3 million children and adolescents are overweight or obese, according to the Australian Bureau of Statistics (ABS) [1]. Obesity significantly increases the risk of chronic diseases such as heart attack, stroke, type 2 diabetes, and certain cancers; many of which are preventable through better dietary choices [2]. While fast food and processed foods offer convenience in our fast paced lives, they contribute to a growing health crisis, placing a massive burden on the healthcare system and, sadly, reducing both the quality and length of life of many people.
+
+Given the rising prevalence of diet related illnesses, it is more crucial than ever to encourage people to consume wholesome, real food prepared at home. However, the demands of modern life often make it challenging for individuals and families to find the time to plan and prepare nutritious meals or to organise all the necessary ingredients.
+
+This API provides a solution by allowing users to create, store, and manage their own recipes (CRUD functionality) or access a wide variety of predefined healthy recipes (with updates and deletions restricted to admin users). Additionally, users can explore recipes created by other users, catering to diverse dietary preferences such as Keto, Low Carb, Paleo, Vegan, Vegetarian, Pescatarian, Dairy-Free, and Gluten-Free. Users can also generate shopping lists based on the recipes they have saved, whether self-created or predefined, saving time and eliminating the hassle of manually creating shopping lists. Therefore, my API addresses the following problems for families and individuals:<br><br>
+    **1. Time Management:** Meal planning, shopping for ingredients, and preparing meals can be time consuming, especially for individuals or families with heavy work schedules and other commitments. As a result, eating healthy, home-cooked meals often becomes a lower priority. The challenge is finding the time to consistently plan and prepare nutritious and varied meals that are enjoyable, without dedicating significant time and effort. My Healthy Meal Planner API alleviates this burden by simplifying the entire meal planning process. Users can choose to create their own tailored recipes when they have time, or they can browse through the many predefined (admin-created) or user-created recipes already available in the database. Once they have selected and stored their preferred recipes, they can generate shopping lists with the exact ingredients and amounts needed for each recipe. This flexibility allows users to efficiently plan meals and avoid unnecessary trips to the shops, ensuring that meal planning becomes a more manageable and less time consuming task.<br><br>
+    **2. Dietary Preferences/Restrictions:** In today’s world, there is a growing number of dietary preferences and restrictions, such as Keto, Low Carb, Vegan, Gluten Free, and Dairy Free diets. Finding recipes that meet specific dietary needs can be challenging and time-consuming. My Healthy Meal Planner API addresses this by categorising each recipe in the database according to dietary preferences such as Keto, Vegan, Paleo, Standard, Vegetarian, Low Carb, Pescatarian, Gluten Free, and Dairy Free. This categorisation allows users to filter and select recipes that meet their dietary needs quickly and efficiently, ensuring they are presented only with relevant recipes that align with their dietary requirements and preferences.<br><br>
+    **3. Food/Ingredient Management:** When shopping for ingredients, it’s easy to forget necessary items, purchase unnecessary ingredients, or overbuy, leading to food waste and discouragement from cooking at home. My Healthy Meal Planner API helps users manage their ingredients more effectively by generating shopping lists based on the recipes they plan to cook. This ensures that users buy only the ingredients they need and in the exact amounts required for their meals, reducing food waste and unnecessary spending. The API supports users in making cooking at home more economical, environmentally friendly, and less stressful.<br><br>
+    **4. Addressing Obesity Crisis:** The obesity crisis, is driven by fast food and processed meals [3], and has led to a surge in the many chronic diseases I mentioned above. With millions of Australians affected, it’s more important than ever to encourage healthier eating habits. My Healthy Meal Planner API addresses this by simplifying the preparation of nutritious, home cooked, unprocessed healthy meals. By providing access to a variety of recipes tailored to dietary preferences like Keto and Low Carb, and by generating precise shopping lists, the API makes it easier for users to choose healthy meals over unhealthy ultraproccessed options. This allows for better dietary choices, helping to combat obesity and reduce the associated health risks.<br><br>
+**References:** <br>
+1. [Overweight and obesity] (https://www.aihw.gov.au/reports/overweight-obesity/overweight-and-obesity/contents/overweight-and-obesity#how_common_overweight)<br>
+2. [Health Risks of Overweight & Obesity] (https://www.niddk.nih.gov/health-information/weight-management/adult-overweight-obesity/health-risks#:~:text=Excess%20fat%20may%20also%20damage,%2C%20kidney%20disease%2C%20and%20death.)<br>
+3. [Macronutrient (im)balance drives energy intake in an obesogenic food environment: An ecological analysis] (https://pubmed.ncbi.nlm.nih.gov/36321270/)
+
+## R2. Describe the way tasks are allocated and tracked in your project.
+
+## R3. List and explain the third-party services, packages and dependencies used in this app.
+
+## R4. Explain the benefits and drawbacks of this app’s underlying database system.
+
+## R5. Explain the features, purpose and functionalities of the object-relational mapping system (ORM) used in this app.
+
+## R6. Design an entity relationship diagram (ERD) for this app’s database, and explain how the relations between the diagrammed models will aid the database design. <br><br>This should focus on the database design BEFORE coding has begun, eg. during the project planning or design phase.
+
+## R7. Explain the implemented models and their relationships, including how the relationships aid the database implementation. <br><br>Explain the implemented models and their relationships, including how the relationships aid the database implementation.
+
+## R8. Explain how to use this application’s API endpoints. Each endpoint should be explained, including the following data for each endpoint:
+- ## HTTP verb
+- ## Path or route
+- ## Any required body or header
+- ## Response

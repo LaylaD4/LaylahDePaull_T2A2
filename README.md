@@ -357,6 +357,93 @@ JWT_SECRET_KEY = ""
 
 ## R4. Explain the benefits and drawbacks of this app’s underlying database system.
 
+In my Flask API project, I use PostgreSQL as the underlying database system. PostgreSQL is an open-source, object-relational database management system (ORDBMS) with a history dating back to the "POSTGRES Project" at the University of California, Berkeley, in 1986. Originally designed to handle complex data types, PostgreSQL has evolved to support standard SQL queries and non-relational data types like JSON, making it highly versatile for modern applications.
+
+PostgreSQL's reliability, scalability, and support for advanced functions and custom data types make it a popular choice for projects ranging from small APIs to large-scale applications used by companies like Apple and Meta. Its open-source nature and strong community support have contributed to its widespread adoption in the developer community.
+
+Below is a discussion of the benefits and drawbacks of this app's underlying database system PostgreSQL, in the discusion, I will also include some examples from my Flask API project.
+
+### BENEFITS OF POSTGRESQL
+
+#### 1. Rich Features & Extensions
+
+PostgreSQL provides a large variety of features and extensions that enhance its utility as a database management system. For example, it supports tablespaces for flexible data storage, asynchronous replication for minimal delay in data replication, and nested transactions, allowing complex operations within independent blocks. In my API, I leverage PostgreSQL's robust support for complex relationships between tables using SQLAlchemy. Below, is an example from my User model showing how PostgreSQL handles these relationships efficiently:
+
+```Python
+# models/user.py
+class User(db.Model):
+    __tablename__ = "users"
+    user_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date())
+    is_admin = db.Column(db.Boolean, default=False)
+
+    recipes = db.relationship("Recipe", back_populates="user", cascade="all, delete")
+    user_recipes = db.relationship("UserRecipe", back_populates="user", cascade="all, delete") 
+```
+
+The cascade="all, delete" option ensures that when a user is deleted, all associated recipes and user_recipes are also removed, demonstrating PostgreSQL's ability to maintain data integrity across complex relationships.
+
+#### 2. Reliability
+
+PostgreSQL is highly regarded for its data integrity and fault tolerance, adhering to the ACID principles (Atomicity, Consistency, Isolation, Durability). These principles ensure that database transactions are reliable and secure, which is crucial for any API handling sensitive user data. PostgreSQL's Write Ahead Logging (WAL) ensures that all changes are recorded before they are applied, protecting against data loss. For example, when a user registers or updates their details, the transactions, such as inserting new records into the users table or updating existing ones, are handled atomically:
+
+```Python
+# controllers/auth_controller.py
+user = User(username=body_data.get("username"), email=body_data.get("email"))
+db.session.add(user)
+db.session.commit()
+```
+
+The db.session.commit() function ensures that all changes are committed to the database only if the transaction is fully successful, which aligns with PostgreSQL's durability and consistency guarantees. This is particularly beneficial in high traffic environments where multiple transactions might occur simultaneously, as PostgreSQL’s Multi-Version Concurrency Control (MVCC) ensures smooth operation without conflicts.
+
+#### 3. Open Source
+
+PostgreSQL's open-source nature makes it a cost-effective solution for developers and small businesses. There are no licensing fees, which allows an API like mine to scale without any additional costs. Moreover, the open-source community around PostgreSQL is large and active, contributing to its continuous improvement through security patches, feature enhancements, and bug fixes.
+
+The flexibility offered by open source also means that the database can be modified to meet specific needs, making it adaptable to a wide range of applications. This is particularly useful when specific project requirements need unique features or performance optimisations. As a result, PostgreSQL not only provides a cost-effective solution but also a reliable and ever-evolving database system that meets modern development needs.
+
+### DRAWBACKS OF POSTGRESQL
+
+#### 1. Complexity
+
+PostgreSQL’s advanced features can be difficult to manage, particularly for those who are new to relational databases or working on smaller projects, such as a Flask application. While PostgreSQL offers a wide array of powerful features and extensions that significantly enhance its capabilities as a database management system, this complexity can pose challenges. Developers may find it hard to understand and navigate PostgreSQL’s advanced functionalities, such as indexing, complex queries, and extensive configuration options.
+
+For example, setting up and managing table relationships in my API with SQLAlchemy, such as using db.relationship, requires a good understanding of how PostgreSQL handles data relationships. To use it effectively, you need to keep the data accurate and make sure queries run efficiently, even if you aren't explicitly dealing with indexing. Moreover, configuring these relationships correctly is critical. Errors can lead to data integrity issues or performance problems, making PostgreSQL's complexity a potential drawback for less experienced developers.
+
+```Python
+# models/recipe.py
+recipe_ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete")
+```
+
+#### 2. Performance Considerations
+
+PostgreSQL’s performance can be impacted by several factors, including large tables, inefficient query structures, and complex data relationships. As an applications data grows, these factors become more significant. PostgreSQL, by default, uses sequential scans, where it reads each row in a table to find the required data. This method can become inefficient as tables grow larger, leading to slower query execution times. To improve performance, it’s crucial to understand PostgreSQL’s indexing mechanisms, which allow the database to quickly locate the required data without scanning the entire table. Complex queries that involve multiple joins between tables or aggregations can also place a heavy load on the database, further affecting performance. Therefore, maintaining good performance requires a solid understanding of query optimisation, indexing, and efficient database design.
+
+For example, as the recipes table in your API increases in size, a simple query like the one below could lead to slower query execution times, especially if the database isn't properly optimised. Proper indexing and query optimisation are essential to maintaining performance as an applications data grows in volume and complexity.
+
+ ```Python
+ # controllers/recipe_controller.py
+stmt = db.select(Recipe)
+recipes = db.session.scalars(stmt)
+ ```
+
+#### 3. Open Source
+
+While the open-source nature of PostgreSQL is a significant advantage, it also has drawbacks. Unlike commercial databases, PostgreSQL does not come with warranties, liability protection, or guaranteed support. This means that if an issue arises in my API, I must rely on community support or my troubleshooting skills, which might not be as reliable or timely as commercial support options.
+
+Additionally, PostgreSQL’s open-source development model can lead to potential compatibility issues with other software and operating systems. While the community is strong and active, there is always a risk that a feature might be modified or deprecated, potentially affecting the API’s performance or functionality.
+
+#### References
+
+1. [PostgreSQL Advantages and Disadvantages](https://www.aalpha.net/blog/pros-and-cons-of-using-postgresql-for-application-development/)
+2. [What is PostgreSQL? Introduction, Advantages & Disadvantages](https://www.guru99.com/introduction-postgresql.html)
+3. [What is PostgreSQL and how does it compare to other database management systems?](https://www.quest.com/learn/what-is-postgresql.aspx#:~:text=For%20most%20use%20cases%2C%20Postgres,of%20ownership%20compared%20to%20Oracle.)
+4. [PostgreSQL: a closer look at the object-relational database management system](https://www.ionos.com/digitalguide/server/know-how/postgresql/)
+
+
 ## R5. Explain the features, purpose and functionalities of the object-relational mapping system (ORM) used in this app.
 
 ## R6. Design an entity relationship diagram (ERD) for this app’s database, and explain how the relations between the diagrammed models will aid the database design. <br><br>This should focus on the database design BEFORE coding has begun, eg. during the project planning or design phase.

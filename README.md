@@ -446,7 +446,49 @@ Additionally, PostgreSQL’s open-source development model can lead to potential
 
 ## R5. Explain the features, purpose and functionalities of the object-relational mapping system (ORM) used in this app.
 
-## R6. Design an entity relationship diagram (ERD) for this app’s database, and explain how the relations between the diagrammed models will aid the database design. <br><br>This should focus on the database design BEFORE coding has begun, eg. during the project planning or design phase.
+## R6. Design an entity relationship diagram (ERD) for this app’s database, and explain how the relations between the diagrammed models will aid the database design. <br><br>This should focus on the database design BEFORE coding has begun, eg. during the project planning or design phase.<br>
+
+![Meal Planner ERD](/docs/meal_planner_erd.png)
+
+### 1. Relations Explanation
+
+- #### User & Recipe: one-to-many (1:N)
+
+    The relationship between the users table and the recipes table represents a one-to-many relationship. This means that a user can hold an account without creating any recipes (minimum of zero). However, a user has the option to create multiple recipes (maximum of many) while holding an account. Conversly, each recipe must belong to one, and only one user (minimum and maximum of one) or admin (for predefined recipes).
+
+- #### User & UserRecipe: one-to-many (1:N)
+
+    The relationship between the users table and the user_recipes table represents a one-to-many relationship. A user may not have any recipes (minimum of zero) saved or stored in their own personal list, but they can add multiple recipes (maximum of many) to their personal list. Conversely, each entry in the user_recipes table must belong to one and only one user (minimum and maximum of one).
+
+- #### Recipe & UserRecipe: one-to-many (1:N)
+
+    The relationship between the recipes table and the user_recipes table represents a one-to-many relationship. A recipe may not be added to any user's personal recipe list (minimum of zero), but it can be added to multiple users' recipe lists (maximum of many). Conversely, a user_recipe entry must correspond to one and only one recipe (minimum and maximum of one).
+
+- #### Recipe & RecipeIngredient: one-to-many (1:N)
+
+    The relationship between the recipes table and the recipe_ingredients table represents a one-to-many relationship. Each recipe must include at least one recipe_ingredient (minimum of one), but it can also contain multiple recipe_ingredients (maximum of many). Conversely, each entry in the recipe_ingredients table must be associated with one and only one recipe (minimum and maximum of one).
+
+- #### Ingredient & RecipeIngredient: one-to-many (1:N)
+
+    The relationship between the ingredients table and the recipe_ingredients table represents a one-to-many relationship. An ingredient does not need to be used in any recipe (minimum of zero), but it can be used in multiple recipes (maximum of many). Each recipe_ingredient entry must be associated with one and only one ingredient (minimum and maximum of one).
+
+### 2. Comparison of Normalisation
+
+The Meal Planner database design, as depicted in the ERD image above, adheres to Third Normal Form (3NF). This design is optimal for reducing redundancy and improving data integrity, following best practices by strictly adhering to the principles of normalisation. Specifically, each table has a primary key, with all columns or attributes containing only atomic values, meaning no repeating groups (1NF). All non-key attributes are entirely dependant on the primary key, with no partial dependencies (2NF). Additionally, there are no transitive dependencies, meaning every attribute depends solely on the primary key (3NF).
+
+Normalisation helps organise database tables to reduce redundancy and improve data integrity. My Meal Planner ERD is designed in Third Normal Form (3NF). Below, I’ll explain how the recipes table would look at different levels of normalisation, and why the creation of the recipe_ingredients junction table was essential for achieving the optimal 3NF design.
+
+#### 1. First Normal Form (1NF):
+
+In 1NF, you could store all recipe details, including ingredients, directly in the recipes table. For example, you might have multiple columns for ingredients, along with their corresponding amounts and units, such as ingredient1, amount1, unit1, and so on. While this setup conforms to 1NF because each field contains only one piece of data, it is highly inefficient. It forces you to store the same ingredient multiple times across different recipes, each with varying amounts and units.
+
+#### 2. Second Normal Form (2NF):
+
+In 2NF, all non-key attributes must be fully dependent on the primary key. So, if you stored a recipe's ingredients directly in the recipes table, it would still conform to 2NF, as each ingredient, amount, and unit would depend on the recipe's primary key. However, this design still leads to redundancy because the same ingredient would likely appear in many different recipes, with each recipe having a different amount or unit. To avoid this redundancy, you would separate the ingredients into a distinct table and connect them to the recipes using a junction table.
+
+#### 3. Second Normal Form (3NF):
+
+To achieve 3NF, you need to eliminate all redundancy and ensure that every non-key attribute depends only on the primary key. This is why the recipe_ingredients table becomes essential. This allows you to store each ingredient only once and associate it with different recipes, specifying the amount and unit for each recipe individually. This setup conforms to 3NF because it eliminates redundancy and ensures that every non-key attribute depends only on the primary key, without any indirect dependencies.
 
 ## R7. Explain the implemented models and their relationships, including how the relationships aid the database implementation. <br><br>This should focus on the database implementation AFTER coding has begun, eg. during the project development phase.
 

@@ -450,31 +450,55 @@ Additionally, PostgreSQL’s open-source development model can lead to potential
 
 ![Meal Planner ERD](/docs/meal_planner_erd.png)
 
-### 1. Relations Explanation
+### 1. Explanation of How the Relations Between the Diagrammed Models will aid the Database Design
 
 - #### User & Recipe: one-to-many (1:N)
 
-    The relationship between the users table and the recipes table represents a one-to-many relationship. This means that a user can hold an account without creating any recipes (minimum of zero). However, a user has the option to create multiple recipes (maximum of many) while holding an account. Conversly, each recipe must belong to one, and only one user (minimum and maximum of one) or admin (for predefined recipes).
+    The one-to-many relationship between the users and recipes tables is fundamental to the database design. This relationship allows each user to create multiple recipes, while ensuring that each recipe is linked only to a single user. By storing a foreign key (user_id) in the Recipes table, the database efficiently tracks which user created which recipes. This setup organises recipes under specific users, making it easy to create new recipes, retrieve recipes created by a particular user, and ensure that users can update or delete only their own recipes. Meanwhile, it allows users to browse or save recipes created by others or by admins (predefined), without having the ability to modify or delete them.
 
 - #### User & UserRecipe: one-to-many (1:N)
 
-    The relationship between the users table and the user_recipes table represents a one-to-many relationship. A user may not have any recipes (minimum of zero) saved or stored in their own personal list, but they can add multiple recipes (maximum of many) to their personal list. Conversely, each entry in the user_recipes table must belong to one and only one user (minimum and maximum of one).
+    The one-to-many relationship between users and user_recipes allows each user to have multiple entries in the user_recipes table, which represents the recipes they have saved to create meal plans and shopping lists of ingredients. This relationship is crucial for tracking which recipes are saved by each user without needing to duplicate the recipes themselves. The user_recipes table tracks which users have saved which recipes by storing both user_id and recipe_id. This setup prevents redundancy, as the same recipe can be saved by multiple users without being duplicated in the database. It also simplifies the retrieval of a user’s saved recipes, making the app personalised, and more user-friendly.
 
 - #### Recipe & UserRecipe: one-to-many (1:N)
 
-    The relationship between the recipes table and the user_recipes table represents a one-to-many relationship. A recipe may not be added to any user's personal recipe list (minimum of zero), but it can be added to multiple users' recipe lists (maximum of many). Conversely, a user_recipe entry must correspond to one and only one recipe (minimum and maximum of one).
+    The one-to-many relationship between recipes and user_recipes tables ensures that a single recipe can be saved by multiple users. The user_recipes table stores the recipe_id, linking each saved recipe to the recipe table. This setup allows the same recipe to be saved by different users without needing to store the recipe multiple times. It efficiently manages user interactions with recipes, ensuring that the database remains organised and scalable.
 
 - #### Recipe & RecipeIngredient: one-to-many (1:N)
 
-    The relationship between the recipes table and the recipe_ingredients table represents a one-to-many relationship. Each recipe must include at least one recipe_ingredient (minimum of one), but it can also contain multiple recipe_ingredients (maximum of many). Conversely, each entry in the recipe_ingredients table must be associated with one and only one recipe (minimum and maximum of one).
+    The one-to-many relationship between the recipes and recipe_ingredients tables allows each recipe to be fully detailed by listing all its individual ingredients, along with their specific amounts and units. This setup means that a single recipe can have multiple recipe_ingredient entries, each specifying a different ingredient with its exact quantity. This relationship helps the database store detailed information about a recipe’s components in an organised way. By separating ingredient details into the recipe_ingredients table, the design avoids redundancy and makes it easy to update or modify recipes. If the ingredients or quantities in a recipe need to change, the relevant recipe_ingredient entries can be updated without impacting other recipes, ensuring efficient and flexible management of recipe data.
 
 - #### Ingredient & RecipeIngredient: one-to-many (1:N)
 
-    The relationship between the ingredients table and the recipe_ingredients table represents a one-to-many relationship. An ingredient does not need to be used in any recipe (minimum of zero), but it can be used in multiple recipes (maximum of many). Each recipe_ingredient entry must be associated with one and only one ingredient (minimum and maximum of one).
+    The one-to-many relationship between the ingredients and recipe_ingredient tables allows each ingredient to be used in multiple recipes. This means that a single ingredient can have multiple recipe_ingredient entries, each linking it to a different recipe or specifying a different quantity and unit for the same ingredient in various recipes. This setup enables the database to manage ingredient data efficiently by storing each ingredient only once in the ingredients table. By linking ingredients to recipes through the recipe_ingredients table, the design prevents duplication and ensures that any changes to an ingredient’s details are reflected across all related recipes. This structure simplifies the process of updating ingredient information and ensures consistent, accurate data management throughout the database.
 
-### 2. Comparison of Normalisation
 
-The Meal Planner database design, as depicted in the ERD image above, adheres to Third Normal Form (3NF). This design is optimal for reducing redundancy and improving data integrity, following best practices by strictly adhering to the principles of normalisation. Specifically, each table has a primary key, with all columns or attributes containing only atomic values, meaning no repeating groups (1NF). All non-key attributes are entirely dependant on the primary key, with no partial dependencies (2NF). Additionally, there are no transitive dependencies, meaning every attribute depends solely on the primary key (3NF).
+### 2. Explanation of How All Relations are Normalised
+
+The Meal Planner database design, as depicted in the ERD image above, adheres to Third Normal Form (3NF). This design is optimal for reducing redundancy and improving data integrity, following best practices by strictly adhering to the principles of normalisation. Specifically, each table has a primary key, with all columns or attributes containing only atomic values, meaning no repeating groups (1NF). All non-key attributes are entirely dependant on the primary key, with no partial dependencies (2NF). Additionally, there are no transitive dependencies, meaning every attribute depends solely on the primary key (3NF). Below I will explain how each relation is normailsed.
+
+
+- #### Users Relation
+
+    The User table is in 3NF. It uses user_id as the primary key, with all other attributes like username, email, password, and is_admin depending directly on this key. This ensures that each user’s information is stored in one place without any unnecessary duplication. By keeping user data centralised, the design maintains atomicity (each piece of data is stored in its simplest form), which simplifies data management and ensures consistency across the application.
+
+- #### Recipes Relation
+
+    The recipes table is also in 3NF. The recipe_id serves as the primary key, and all attributes, such as name, description, is_predefined, and created_at, are fully dependent on it. The user_id foreign key links each recipe to the user who created it, ensuring that all data in the Recipe table depends entirely on the primary key, without any partial dependencies (where an attribute depends on only part of a composite primary key). This structure avoids data redundancy and ensures that each recipe is accurately linked to its creator.
+
+- #### Ingredients Relation
+
+    The ingredients table is in 3NF. Each ingredient is uniquely identified by ingredient_id, with the name attribute directly depending on this key. This setup ensures atomicity, meaning each ingredient is stored in its simplest form, avoiding duplicate entries. This structure ensures consistency in ingredient data across all recipes and makes it easier to update or modify ingredients when necessary.
+
+- #### RecipeIngredient Relation
+
+    The recipe_ingredients table is in 3NF, managing the many-to-many relationship between recipes and ingredients. Although it has a primary key (recipe_ingredient_id), my queries focus on the composite key (recipe_id, ingredient_id). The additional attributes of, amount and unit, depend directly on this composite key, ensuring there are no partial dependencies (unnecessary data duplication) or transitive dependencies (indirect data links that depend on other non-key attributes). This setup ensures that each ingredient’s relationship to a recipe is unique, and without redundancy.
+
+- #### UserRecipe Relation
+
+    The user_recipes table, which manages the many-to-many relationship between users and recipes, is also in 3NF. Although it has a primary key (user_recipe_id), my queries rely on the composite key (user_id, recipe_id). This setup ensures that each user's saved recipes are uniquely stored, avoiding unnecessary data duplication.
+
+### 3. Comparison of Normalisation
 
 Normalisation helps organise database tables to reduce redundancy and improve data integrity. My Meal Planner ERD is designed in Third Normal Form (3NF). Below, I’ll explain how the recipes table would look at different levels of normalisation, and why the creation of the recipe_ingredients junction table was essential for achieving the optimal 3NF design.
 
@@ -491,6 +515,163 @@ In 2NF, all non-key attributes must be fully dependent on the primary key. So, i
 To achieve 3NF, you need to eliminate all redundancy and ensure that every non-key attribute depends only on the primary key. This is why the recipe_ingredients table becomes essential. This allows you to store each ingredient only once and associate it with different recipes, specifying the amount and unit for each recipe individually. This setup conforms to 3NF because it eliminates redundancy and ensures that every non-key attribute depends only on the primary key, without any indirect dependencies.
 
 ## R7. Explain the implemented models and their relationships, including how the relationships aid the database implementation. <br><br>This should focus on the database implementation AFTER coding has begun, eg. during the project development phase.
+
+### 1. Explain implemented models and their relationships
+
+#### 1. **User Model**
+
+The User model allows a user to create an account, and log in to the meal planner database. Users can create, update, and delete their own recipes, while having access to other users' recipes, and predefined ones created by admins. The relationships in the User model ensures that when a user is deleted, that all their associated recipes and user recipe records are also deleted too, maintaining data integrity.
+
+   - **Attributes**:
+     - **user_id:** Serves as the Primary Key for a user entry
+     - **username:** Upon registration, a user must enter a username
+     - **email:** Upon registration, a user must enter a valid email address, which must be unique.
+     - **password:** Upon registration, a user must enter a valid password, which is hashed when stored.
+     - **created_at:** This captures the date when the user created their account.
+     - **is_admin:** Is a boolean, that defaults to false, and indicates whether the user has admin privileges.
+
+   ### Relationships
+   **User to Recipe (One-to-Many)**: Each user can create multiple recipes or none, but each recipe is linked to one and only one user.  
+   **User to UserRecipe (One-to-Many)**: A user may not have any recipes saved or stored in their own personal list, but they can add multiple recipes to their personal list if they so choose.  
+
+**Code Example Usage**: In the delete_user route in auth_controller.py, when a user is deleted, all their associated recipes are also deleted due to the cascade="all, delete" option in the relationship.
+
+```Python
+db.session.delete(user)
+db.session.commit()
+```
+
+#### 2. **Recipe Model**
+
+The Recipe model allows users to search for all recipes in the database along with their associated ingredients. Additionally, it enables users to filter recipes based on specific dietary needs or preferences, via the description attribute for keywords like 'Gluten Free', 'Keto', or 'Vegan'.
+
+   - **Attributes**:
+     - **recipe_id**: Serves as the Primary Key for a recipe entry
+     - **name**: The name of the recipe, must be entered, and be of valid length.
+     - **description**: A short description, that only allows a combination of 'VALID_DESCRIPTIONS' to categorise a recipe.
+     - **is_predefined**: s a boolean, that defaults to false, indicating whether the recipe is a predefined system recipe.
+     - **created_at**: This captures the date when a recipe is created.
+     - **user_id**: Serves as a Foreign Key referencing the user, who created the recipe.
+
+   ### Relationships
+   **Recipe to User (Many-to-One)**: A user can create many recipes, however each recipe must belong to one, and only one user.  
+   **Recipe to RecipeIngredient (One-to-Many)**: A recipe can have multiple recipe_ingredients, however, a recipe_ingredient, can belong to one and only one recipe.  
+   **Recipe to UserRecipe (One-to-Many)**: A recipe can be saved by multiple users in their personal lists, but a user_recipe entry must correspond to one and only one recipe.
+
+**Code Example Usage**: In the create_recipe route in recipe_controller.py, when a new recipe is created, the user who created it is associated with the recipe:
+
+```Python
+recipe = Recipe(
+    name = body_data.get("name"),
+    description = body_data.get("description"),
+    user_id = get_jwt_identity()  
+)
+db.session.add(recipe)
+db.session.commit()
+```
+
+#### 3. **Ingredient Model**
+
+This model stores all ingredients for recipes in the database. The relationship between Ingredient and Recipe via the RecipeIngredient model ensures that each ingredient is only stored once, reducing data redundancy, when new recipes and their associated ingredients are added to the database.
+
+   - **Attributes**:
+     - **ingredient_id**: Serves as the Primary Key for an ingredient entry.
+     - **name**: The name of the ingredient, must be entered, and be of valid length.
+
+   ### Relationships
+   **Ingredient to RecipeIngredient (One-to-Many)**: An ingredient can be part of multiple recipe_ingredients, however each recipe_ingredient entry must be associated with one and only one ingredient 
+
+**Code Example Usage**: In the update_recipe route in recipe_controller.py, you can add or update ingredients in a recipe:
+
+```Python
+stmt = db.select(Ingredient).filter_by(name=name)
+ingredient = db.session.scalar(stmt)
+        
+if not ingredient:
+    ingredient = Ingredient(name=name)
+    db.session.add(ingredient)
+    db.session.commit() 
+```
+
+#### 4. **RecipeIngredient Model**
+
+This model serves as a junction table, managing the many-to-many relationship between the Recipe and Ingredient models. It allows each recipe to have its own specific ingredients, with distinct amounts and units for each ingredient.
+
+   - **Attributes**:
+     - **recipe_ingredient_id**: Serves as the Primary Key for a recipe_ingredient entry.
+     - **amount**: The quantity of the ingredient must be entered as a float.
+     - **unit**: The measurement or unit of the ingredient, must be entered as a string, eg; grams, cup.
+     - **recipe_id**: Serves as a Foreign Key referencing the recipe, the reciped_ingredient is associated with.
+     - **ingredient_id**: Serves as a Foreign Key referencing ingredient, the reciped_ingredient is associated with.
+
+   ### Relationships
+   **RecipeIngredient to Recipe (Many-to-One)**: A recipe can contain multiple recipe_ingredients, however, each entry in the recipe_ingredients table must be associated with one and only one recipe.  
+   **RecipeIngredient to Ingredient (Many-to-One)**: An ingredients can be used in multiple recipe ingredients, however, each recipe_ingredient entry must be associated with one and only one ingredient.
+
+**Code Example Usage**: When creating or updating a recipe, you use the RecipeIngredient model to associate ingredients with the recipe:
+
+```Python
+recipe_ingredient = RecipeIngredient(
+    recipe_id=recipe.recipe_id,
+    ingredient_id=ingredient.ingredient_id,
+    amount=amount,
+    unit=unit
+)
+db.session.add(recipe_ingredient)
+db.session.commit()
+```
+
+#### 5. **UserRecipe Model**
+
+This model serves as a junction table, managing the many-to-many relationship between between Users and Recipe models. It allows users to save the recipes they want to cook at home, enabling them to create a personalised shopping lists with all the necessary ingredients, including their specific amounts and units, for those saved recipes.
+
+   - **Attributes**:
+     - **user_recipe_id**: Serves as the Primary Key for a user_recipe entry.
+     - **user_id**: Serves as a Foreign Key referencing the user, that the user_recipe is associated with.
+     - **recipe_id**: Serves as a Foreign Key referencing recipe, that the user_recipe is associated with.
+
+   ### Relationships
+   **UserRecipe to User (Many-to-One)**: A user can have many user_recipes, however each entry in the user_recipes table must belong to one and only one user.  
+   **UserRecipe to Recipe (Many-to-One)**: A recipe can be added to multiple users' recipe lists, however, a user_recipe entry must correspond to one and only one recipe.
+
+**Code Example Usage**: In the add_user_recipe route in user_recipe_controller.py, you add a recipe to the user's personal list:
+
+```Python
+user_recipe = UserRecipe(user_id=user_id, recipe_id=recipe_id)
+db.session.add(user_recipe)
+db.session.commit()
+```
+
+- #### User & Recipe: one-to-many (1:N)
+
+    The relationship between the users table and the recipes table represents a one-to-many relationship. This means that a user can hold an account without creating any recipes (minimum of zero). However, a user has the option to create multiple recipes (maximum of many) while holding an account. Conversely, each recipe must belong to one, and only one user (minimum and maximum of one) or admin (for predefined recipes).
+
+- #### User & UserRecipe: one-to-many (1:N)
+
+    The relationship between the users table and the user_recipes table represents a one-to-many relationship. A user may not have any recipes (minimum of zero) saved or stored in their own personal list, but they can add multiple recipes (maximum of many) to their personal list. Conversely, each entry in the user_recipes table must belong to one and only one user (minimum and maximum of one).
+
+- #### Recipe & UserRecipe: one-to-many (1:N)
+
+    The relationship between the recipes table and the user_recipes table represents a one-to-many relationship. A recipe may not be added to a user's personal recipe list (minimum of zero), but it can be added to multiple users' recipe lists (maximum of many). Conversely, a user_recipe entry must correspond to one and only one recipe (minimum and maximum of one).
+
+- #### Recipe & RecipeIngredient: one-to-many (1:N)
+
+    The relationship between the recipes table and the recipe_ingredients table represents a one-to-many relationship. Each recipe must include at least one recipe_ingredient (minimum of one), but it can also contain multiple recipe_ingredients (maximum of many). Conversely, each entry in the recipe_ingredients table must be associated with one and only one recipe (minimum and maximum of one).
+
+- #### Ingredient & RecipeIngredient: one-to-many (1:N)
+
+    The relationship between the ingredients table and the recipe_ingredients table represents a one-to-many relationship. An ingredient does not need to be used in any recipe (minimum of zero), but it can be used in multiple recipes (maximum of many). Each recipe_ingredient entry must be associated with one and only one ingredient (minimum and maximum of one).
+
+### 2. How the Relationships Aid in Database Implementation
+
+- **Efficiency and Data Integrity**: The relationships between these models ensure that data is stored efficiently without unnecessary duplication. For example, ingredients are only stored once in the ingredient table, and the recipe_ingredients table links them to recipes. This structure ensures that the same ingredient can be used across multiple recipes without redundancy.
+
+- **Scalability**: The use of relationships makes the database structure scalable. As the number of users, recipes, and ingredients grows, the relationships ensure that data remains organised and easy to manage.
+
+- **Ease of Querying**: The established relationships simplify data retrieval. For example, retrieving all recipes created by a user, or all ingredients for a recipe, is straightforward due to the clear links between tables.
+
+- **User Experience:**: These relationships support essential features like user-specific recipe lists, managing ingredients within recipes, and user permissions for creating, updating, or deleting recipes. This improves the user experience by making the app easy to use and responsive to each user's needs.
+
 
 ## R8. Explain how to use this application’s API endpoints. Each endpoint should be explained, including the following data for each endpoint:
 - ## HTTP verb

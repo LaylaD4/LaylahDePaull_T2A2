@@ -361,13 +361,13 @@ In my Flask API project, I use PostgreSQL as the underlying database system. Pos
 
 PostgreSQL's reliability, scalability, and support for advanced functions and custom data types make it a popular choice for projects ranging from small APIs to large-scale applications used by companies like Apple and Meta. Its open-source nature and strong community support have contributed to its widespread adoption in the developer community.
 
-Below is a discussion of the benefits and drawbacks of this app's underlying database system PostgreSQL, in the discusion, I will also include some examples from my Flask API project.
+Below is a discussion of the benefits and drawbacks of this app's underlying database system PostgreSQL, in the discussion, I will also include some examples from my Flask API project.
 
 ### BENEFITS OF POSTGRESQL
 
 #### 1. Rich Features & Extensions
 
-PostgreSQL provides a large variety of features and extensions that enhance its utility as a database management system. For example, it supports tablespaces for flexible data storage, asynchronous replication for minimal delay in data replication, and nested transactions, allowing complex operations within independent blocks. In my API, I leverage PostgreSQL's robust support for complex relationships between tables using SQLAlchemy. Below, is an example from my User model showing how PostgreSQL handles these relationships efficiently:
+PostgreSQL provides a large variety of features and extensions that enhance its utility as a database management system. For example, it supports tablespaces for flexible data storage, asynchronous replication for minimal delay in data replication, and nested transactions, allowing complex operations within independent blocks. In my API, I leverage PostgreSQL's support for complex relationships between tables using SQLAlchemy. Below, is an example from my User model showing how PostgreSQL handles these relationships efficiently:
 
 ```Python
 # models/user.py
@@ -446,7 +446,7 @@ Additionally, PostgreSQL’s open-source development model can lead to potential
 
 ## R5. Explain the features, purpose and functionalities of the object-relational mapping system (ORM) used in this app.
 
-In the Meal Planner app, SQLAlchemy, an Object-Relational Mapping (ORM) tool, plays a vital role in managing the database. ORMs simplify working with databases by letting developers use Python instead of writing SQL queries. Below are several key features of SQLAlchemy and how they support my API's functionality.
+In my Meal Planner API, SQLAlchemy, an Object-Relational Mapping (ORM) tool, plays a vital role in managing the database. ORMs simplify working with databases by letting developers use Python instead of writing SQL queries. Below are several key features of SQLAlchemy and how they support my API's functionality.
 
 One of the main benefits of SQLAlchemy is simplifying database interactions. Instead of manually writing SQL queries, developers can define models in Python that represent database tables. For example, a User model corresponds to a users table in the database. This allows developers to easily perform database operations without worrying about SQL syntax.
 
@@ -528,7 +528,7 @@ In conclusion, SQLAlchemy ORM greatly simplifies database management by offering
 
 - #### User & UserRecipe: one-to-many (1:N)
 
-    The one-to-many relationship between users and user_recipes allows each user to have multiple entries in the user_recipes table, which represents the recipes they have saved to create meal plans and shopping lists of ingredients. This relationship is crucial for tracking which recipes are saved by each user without needing to duplicate the recipes themselves. The user_recipes table tracks which users have saved which recipes by storing both user_id and recipe_id. This setup prevents redundancy, as the same recipe can be saved by multiple users without being duplicated in the database. It also simplifies the retrieval of a user’s saved recipes, making the app personalised, and more user-friendly.
+    The one-to-many relationship between users and user_recipes allows each user to have multiple entries in the user_recipes table, which represents the recipes they have saved to create meal plans and shopping lists of ingredients. This relationship is crucial for tracking which recipes are saved by each user without needing to duplicate the recipes themselves. The user_recipes table tracks which users have saved which recipes by storing both the user_id and recipe_id. This setup prevents redundancy, as the same recipe can be saved by multiple users without being duplicated in the database. It also simplifies the retrieval of a user’s saved recipes, making the API personalised, and more user-friendly.
 
 - #### Recipe & UserRecipe: one-to-many (1:N)
 
@@ -584,6 +584,12 @@ In 2NF, all non-key attributes must be fully dependent on the primary key. So, i
 
 To achieve 3NF, you need to eliminate all redundancy and ensure that every non-key attribute depends only on the primary key. This is why the recipe_ingredients table becomes essential. This allows you to store each ingredient only once and associate it with different recipes, specifying the amount and unit for each recipe individually. This setup conforms to 3NF because it eliminates redundancy and ensures that every non-key attribute depends only on the primary key, without any indirect dependencies.
 
+#### Refereences
+
+1. [Database Normalization – Normal Forms 1nf 2nf 3nf Table Examples](https://www.freecodecamp.org/news/database-normalization-1nf-2nf-3nf-table-examples/)  
+2. [Description of the database normalization basics](https://learn.microsoft.com/en-us/office/troubleshoot/access/database-normalization-description)
+
+
 ## R7. Explain the implemented models and their relationships, including how the relationships aid the database implementation. <br><br>This should focus on the database implementation AFTER coding has begun, eg. during the project development phase.
 
 ### 1. Explain implemented models and their relationships
@@ -619,7 +625,7 @@ The Recipe model allows users to search for all recipes in the database along wi
      - **recipe_id**: Serves as the Primary Key for a recipe entry
      - **name**: The name of the recipe, must be entered, and be of valid length.
      - **description**: A short description, that only allows a combination of 'VALID_DESCRIPTIONS' to categorise a recipe.
-     - **is_predefined**: s a boolean, that defaults to false, indicating whether the recipe is a predefined system recipe.
+     - **is_predefined**: Is a boolean that defaults to false, indicating whether the recipe is a predefined recipe.
      - **created_at**: This captures the date when a recipe is created.
      - **user_id**: Serves as a Foreign Key referencing the user, who created the recipe.
 
@@ -672,11 +678,11 @@ This model serves as a junction table, managing the many-to-many relationship be
      - **amount**: The quantity of the ingredient must be entered as a float.
      - **unit**: The measurement or unit of the ingredient, must be entered as a string, eg; grams, cup.
      - **recipe_id**: Serves as a Foreign Key referencing the recipe, the reciped_ingredient is associated with.
-     - **ingredient_id**: Serves as a Foreign Key referencing ingredient, the reciped_ingredient is associated with.
+     - **ingredient_id**: Serves as a Foreign Key referencing the ingredient, the reciped_ingredient is associated with.
 
    ### Relationships
    **RecipeIngredient to Recipe (Many-to-One)**: A recipe can contain multiple recipe_ingredients, however, each entry in the recipe_ingredients table must be associated with one and only one recipe.  
-   **RecipeIngredient to Ingredient (Many-to-One)**: An ingredients can be used in multiple recipe ingredients, however, each recipe_ingredient entry must be associated with one and only one ingredient.
+   **RecipeIngredient to Ingredient (Many-to-One)**: An ingredient can be used in multiple recipe_ingredients, however, each recipe_ingredient entry must be associated with one and only one ingredient.
 
 **Code Example Usage**: When creating or updating a recipe, you use the RecipeIngredient model to associate ingredients with the recipe:
 
@@ -693,18 +699,18 @@ db.session.commit()
 
 #### 5. **UserRecipe Model**
 
-This model serves as a junction table, managing the many-to-many relationship between between Users and Recipe models. It allows users to save the recipes they want to cook at home, enabling them to create a personalised shopping lists with all the necessary ingredients, including their specific amounts and units, for those saved recipes.
+This model serves as a junction table, managing the many-to-many relationship between between Users and Recipe models. It allows users to save the recipes they want to cook at home, enabling them to create a personalised shopping list with all the necessary ingredients, including their specific amounts and units, for those saved recipes.
 
    - **Attributes**:
      - **user_recipe_id**: Serves as the Primary Key for a user_recipe entry.
      - **user_id**: Serves as a Foreign Key referencing the user, that the user_recipe is associated with.
-     - **recipe_id**: Serves as a Foreign Key referencing recipe, that the user_recipe is associated with.
+     - **recipe_id**: Serves as a Foreign Key referencing the recipe, that the user_recipe is associated with.
 
    ### Relationships
    **UserRecipe to User (Many-to-One)**: A user can have many user_recipes, however each entry in the user_recipes table must belong to one and only one user.  
    **UserRecipe to Recipe (Many-to-One)**: A recipe can be added to multiple users' recipe lists, however, a user_recipe entry must correspond to one and only one recipe.
 
-**Code Example Usage**: In the add_user_recipe route in user_recipe_controller.py, you add a recipe to the user's personal list:
+**Code Example Usage**: In the add_user_recipe route in the user_recipe_controller.py, a user can add a recipe to their own personal list:
 
 ```Python
 user_recipe = UserRecipe(user_id=user_id, recipe_id=recipe_id)
@@ -736,7 +742,7 @@ db.session.commit()
 
 ### 2. How the Relationships Aid in Database Implementation
 
-In my Meal Planner API, the relationships between models like users, recipes, and ingredients are essential for keeping the database organised, efficient, and tailored to the app’s needs.
+In my Meal Planner API, the relationships between models like users, recipes, and ingredients are essential for keeping the database organised, efficient, and tailored to the API's needs.
 
 First, these relationships ensure efficiency and data integrity. Ingredients are stored in a single ingredients table, and the recipe_ingredients table links them to specific recipes. This means the same ingredient, like “Almond Flour,” is stored only once but can be used in multiple recipes (eg; Keto and Vegan Pancakes). This relationship structure prevents duplication of ingredient data while allowing each recipe to have its own unique amounts and units for the ingredients it has. 
 
@@ -744,9 +750,9 @@ The relationships also enhance the scalability of the database. As more users, r
 
 Ease of querying is another benefit of these relationships. For example, the relationship between the users and recipes tables allows you to quickly retrieve all the recipes created by a particular user. Similarly, you can easily query all the ingredients for a specific recipe due to the links between the recipes, recipe_ingredients, and ingredients tables. These relationships make it easy to access data without needing complex queries.
 
-Finally, the relationships directly support user-specific features. For example, users can save their favorite recipes using the user_recipes table, which links users to recipes. This setup allows each user to manage their own personal list of saved recipes without duplicating any recipe data. Users can also manage ingredients for their recipes through the recipe_ingredients table, which stores the amounts and units for each ingredient, making it easy to update or change recipes.
+Finally, the relationships directly support user-specific features. For example, users can save their favourite recipes using the user_recipes table, which links users to recipes. This setup allows each user to manage their own personal list of saved recipes without duplicating any recipe data. Users can also manage ingredients for their recipes through the recipe_ingredients table, which stores the amounts and units for each ingredient, making it easy to update or change recipes.
 
-In summary, the relationships in the Meal Planner API not only make the database more efficient and scalable but also support essential features like easy data retrieval, personalised recipe lists, and ingredient management. These relationships ensure the API runs smoothly as it grows and remains very user-friendly.
+In summary, the relationships in my Meal Planner API not only make the database more efficient and scalable but also support essential features like easy data retrieval, personalised recipe lists, and ingredient management. These relationships ensure the API runs smoothly as it grows and remains very user-friendly.
 
 ## R8. Explain how to use this application’s API endpoints. Each endpoint should be explained, including the following data for each endpoint:
 - ## HTTP verb

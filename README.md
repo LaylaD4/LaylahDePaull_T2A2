@@ -678,3 +678,654 @@ db.session.commit()
 - ## Path or route
 - ## Any required body or header
 - ## Response
+
+My API, has a total of three controllers that include many differing enpoints, that allow an end user to perform various tasks from registering an account, to creating a recipe, or fetching ingredients for a shopping list. Below I will go through each controller, that is; the auth_controller, recipe_controller, and user_recipe controller, and describe the HTTP Verbs, path or route, requireed body or head data, and expected responses for each endpoint in my API.
+
+## `controllers/auth_controller.py`
+
+### REGISTERING A NEW USER ACCOUNT  
+The `/auth/register` endpoint allows a client to create a new user account by sending a POST request with a JSON body containing username, email, and password. The password is securely hashed before storing in the database. The endpoint returns the created user data upon success, or an error message if there’s an issue like missing data or a duplicate email.
+
+### 1. HTTP Verb
+
+- **POST**: This endpoint uses the POST HTTP method, which is used to submit the users registration data of username, email, and password to the server to create a new user account.
+
+### 2. Path or Route
+
+- **Path**: `/auth/register`
+
+### 3. Required Body Data or Header Data
+
+There are no specific headers required for this endpoint. The request body must contain JSON data that includes the following fields when a new user registers an account:  
+- **username**: This username must be unique, with a minimum of 4 characters.  
+- **email**: This email address must be unique, with the correct email formatting.  
+- **password**: This password must be atleast 6 characters in length, and comply with other character rules set. Because it is a password, this field is sensitive, and will be hashed before storing it in the database.  
+
+**Example JSON body** Where a user is creating a new account correctly:
+
+```json
+{
+  "username": "Lucy",
+  "email": "lucy4@email.com",
+  "password": "Abc&123"
+}
+```
+
+### 4. Response
+
+- **Success Response**: If the user successfully creates an account (HTTP Status Code: 201 Created), the API will return:
+
+![Successful User Registration](docs/register_success.png)
+
+- **Error Response**: If the user fails to enter a required field, such as username, email, or password (HTTP Status Code: 400 Bad Request), the API will return:
+
+![Missing User Registration Data](docs/register_missing.png)
+
+- **Error Response**: If the user trys to enter an email that is not unique, and already exists in the database (HTTP Status Code: 400 Bad Request), the API will return:
+
+![User Registration Duplicate Email](docs/register_duplicate.png)
+
+### LOGGING INTO A USER ACCOUNT  
+The `/auth/login` endpoint allows a client to log in to a user account by sending a POST request with a JSON body containing an email and password. If those credentials are correct, the server responds with the user's email, their admin status, and a JWT token. If the credentials are incorrect, the server responds with an error message indicating invalid email or password. Upon successful authentication, the API generates a JSON Web Token (JWT) for the user. This token is crucial for accessing other protected endpoints within the application. The token is set to expire after 1 day (expires_delta=timedelta(days=1)).
+
+### 1. HTTP Verb
+
+- **POST**: This endpoint uses the POST HTTP method to submit the user's login data of email and password to the server, where it logs in and authenticates the user by creating a token (JWT).
+
+### 2. Path or Route
+
+- **Path**: `/auth/login`
+
+### 3. Required Body Data or Header Data  
+
+There are no specific headers required for this endpoint. The request body must contain JSON data that includes the following fields:  
+- **email**: This email address that the user used to register their account. 
+- **password**: The password used, when registering their (user) account together, with the above associated email address.
+
+**Example JSON body** Where a user is correctly logging in to their account:
+
+```json
+{
+  "email": "lucy4@email.com",
+  "password": "Abc&123"
+}
+```
+
+### 4. Response
+
+- **Success Response**: If the user successfully logs in to their account successfully, that is they used the correct email address, and password combination (HTTP Status Code: 200 OK), the API will return:
+
+![Successful User Login](docs/login_success.png)
+
+- **Error Response**: If the user fails to enter the correct email or password, or if the email is not found, (HTTP Status Code: 400 Bad Request), the API will return:
+
+![Incorrect Password Entered For Login](docs/login_fail.png)  
+
+### UPDATING A USER ACCOUNT (By a user that is not admin) 
+The `/auth/users` endpoint allows authenticated users to update specific account details, specifically their username and/or password, using the PATCH method. The request must include a valid JWT token, and users are restricted from changing their email address or admin status. Upon a successful update, the server responds with the updated user data. If the user does not exist or tries to make unauthorised changes, appropriate error messages are returned.
+
+### 1. HTTP Verb
+
+- **PATCH**: This endpoint uses the PATCH HTTP method to update a user's data, such as username and/or password, in the database without replacing the entire user account or resource. The user must be logged in and authenticated via their JWT to perform this action.
+
+### 2. Path or Route
+
+- **Path**: `/auth/users`
+
+### 3. Required Body Data or Header Data  
+
+The request must include a valid JWT token in the Authorisation header. This token is required to authenticate the user making the request. The request body must contain JSON data that includes one or both of the following fields:  
+- **username**: The username that the user would like to update or change, assuming it is valid
+- **password**: The password that the user would like to update or change., assuming it is valid.
+
+**Example JSON body** Where a user is changing just their username for their account:
+
+```json
+{
+  "username": "Lucy44",
+}
+```
+
+### 4. Response
+
+- **Success Response**: If the user successfully changes their username, and they have their valid JWT token given durung login entered correctly in the header (HTTP Status Code: 200 OK), the API will return:
+
+![Successful User Patch for Username](docs/userpatch_success.png)
+
+- **Error Response**:If the user attempts to change their email, (HTTP Status Code: 403 Forbidden), the API will return:
+
+![User Trys to Change Email](docs/userpatch_emailerror.png)  
+
+- **Error Response**:If the user attempts to change their admin status, (HTTP Status Code: 403 Forbidden), the API will return:
+
+![User Trys to Change Admin Status](docs/userpatch_adminerror.png)  
+
+### DELETING A USER ACCOUNT (By a user that is not admin) 
+The `/auth/users/<int:user_id>` endpoint allows authenticated users to delete a user account using the DELETE method. The request must include a valid JWT token, and the user must either be the account owner or an admin to perform the deletion. When a user is deleted, all related data asscociated with that user (user_id), like their recipes, are also deleted via cascading. Upon successful deletion, the server returns a confirmation message. If the user doesn’t exist or the deletion is unauthorised, appropriate error messages are also returned.
+
+### 1. HTTP Verb
+
+- **DELETE**: This endpoint uses the DELETE HTTP method to delete a user's account, and associated data (recipes/user_recipes), from the database. The user must be recently logged in and authenticated via their JWT to perform this action.
+
+### 2. Path or Route
+
+- **Path**: `/auth/users/<int:user_id>` (Note; `<int:user_id>` is a placeholder for a user's user_id, eg; the int: 3)
+
+### 3. Required Body Data or Header Data  
+
+The user making the request must be either the owner of the account (ie; the user_id matches the ID from the JWT token) or an admin. There is no body data required to make this request. However, the request must include a valid JWT token in the Authorisation header, to authenticate the user making the request is the owner of the account or is_admin:  
+
+- **Example JWT Token**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyNzU3NDE4NiwianRpIjoiMmUyYzZjYWYtMTM1Yi00ZmFkLWFmMGYtZTVmNDVmNjUzNDJhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3Mjc1NzQxODYsImNzcmYiOiIzMTIxYmQzZS1lZDYzLTQ2NDQtOTYyMS05NmY4MjA5ZDQ1ZGYiLCJleHAiOjE3Mjc2NjA1ODZ9.e6uOPoV1OluxBJmEOjSePp4xLvD1Iq6eIbQo1kp7zVY`
+
+
+### 4. Response
+
+- **Success Response**: If the user owns the account or is_admin, and so successfully deletes their account, providing they have their valid JWT token entered correctly in the header (HTTP Status Code: 200 OK), the API will return:
+
+![Successful User Deletion](docs/userdelete_success.png)
+
+- **Error Response**: If the user making the request does not have permission to delete the account, that is; they are neither the owner nor an admin (HTTP Status Code: 403 Forbidden), the API will return:
+
+![User Trys to Change Email](docs/userdelete_forbidden.png)  
+
+- **Error Response**: If the user with the specified user_id does not exist in the database., (HTTP Status Code: 404 Not Found), the API will return:
+
+![User Trys to Change Admin Status](docs/userdelete_notfound.png)  
+
+### UPDATING A USER ACCOUNT (By admin only) 
+The `/auth/users/<int:user_id>` endpoint allows an admin to update specific details of a user's account using either the PATCH method.  The request must include a valid JWT token, and is enforced by the @auth_as_admin_decorator, which checks if the current user has admin privileges. Admins can update a user’s username, email, and is_admin status but are prohibited from changing the user’s password. If the update is successful, the server responds with the updated user data. If the  user doesn’t exist or the admin tries to change the password, appropriate error messages are also returned.
+
+### 1. HTTP Verb
+
+- **PATCH**: This method is used to update specific fields of the user’s account, such as a users; username, email, and admin status. To perform this action, an admin must be logged in and authenticated via their JWT, and the request must pass the @auth_as_admin_decorator check.
+
+### 2. Path or Route
+
+- **Path**: `/auth/users/<int:user_id>` (Note; `<int:user_id>` is a placeholder for the user_id, eg; the int: 3)
+
+### 3. Required Body Data or Header Data    
+
+The request must include a valid JWT token in the Authorisation header. This token is required to authenticate the user making the request. The request body must contain JSON data that includes one or either of the following fields:  
+- **username**: The new username for the user being updated.
+- **email**: The new email address for the user being update.
+- **is_admin**: The updated admin status (true/false) for the user being updated.
+
+**Example JSON body** Where a user is being updated (by an admin) to become an admin, recieveing a new username, and email also:
+
+```json
+{
+  "username": "lucy_admin",
+  "email": "lucy@mealplanner.com",
+  "is_admin": true
+}
+```
+
+### 4. Response
+
+- **Success Response**: If the user is an admin, the user exists and the update is successful, and so the update is successful (HTTP Status Code: 200 OK), the API will return:
+
+![Admin Update Successful](docs/admin_updatesuccess.png)
+
+- **Error Response**: If the user making the request does not have permission to make the update, that is, they are not an admin, and are trying to change their email address (HTTP Status Code: 403 Forbidden), the API will return:
+
+![Non-Admin Trys to Update Users](docs/adminupdate_forbidden.png)
+
+- **Error Response**: If the user with the specified user_id does not exist in the database, when an admin is trying to update an email (HTTP Status Code: 404 Not Found), the API will return:
+
+![Admin Update Can't find User](docs/adminupdate_nouser.png)  
+
+### GETTING ALL USER ACCOUNTS IN THE DATABASE (By admin only) 
+The /auth/users endpoint allows an admin to retrieve a list of all users currently registered in the meal planner database using the GET method. The request must include a valid JWT token, and the user must have admin privileges, which are verified by the @auth_as_admin_decorator. If the request is successful, the server returns a list of all users in the database. If the user is not an admin, they will receive a 403 Forbidden error.
+
+### 1. HTTP Verb
+
+- **GET**: This method is used to retrieve a list of all users who currently have accounts in the system. To perform this action, an admin must be logged in and authenticated via their JWT, and the request must pass the @auth_as_admin_decorator check.
+
+### 2. Path or Route
+
+- **Path**: ` /auth/users`
+
+### 3. Required Body Data or Header Data
+
+The user making the request must be an admin, there is no body data required to make this request. However, the request must include a valid JWT token in the Authorisation header, to authenticate the user making the request is_admin. This is enforced by the @auth_as_admin_decorator, which checks if the current user has admin privileges.  
+
+- **Example JWT Token**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyNzU3NDE4NiwianRpIjoiMmUyYzZjYWYtMTM1Yi00ZmFkLWFmMGYtZTVmNDVmNjUzNDJhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3Mjc1NzQxODYsImNzcmYiOiIzMTIxYmQzZS1lZDYzLTQ2NDQtOTYyMS05NmY4MjA5ZDQ1ZGYiLCJleHAiOjE3Mjc2NjA1ODZ9.e6uOPoV1OluxBJmEOjSePp4xLvD1Iq6eIbQo1kp7zVY`  
+
+### 4. Response
+
+- **Success Response**: If the request is authorised and the user is an admin, (HTTP Status Code: 200 OK), the API will return:
+
+![Admin Get All Users](docs/admin_getallusers.png)
+
+- **Error Response**: If the user making the request does not have permission to make the update, that is, the user making the request does not have admin privileges, they will be denied access to this endpoint (HTTP Status Code: 403 Forbidden), the API will return:
+
+![Non-Admin Trys to Get all Users](docs/notadmin_getallusers.png)
+
+
+## `controllers/recipe_controller.py`
+
+### GET ALL RECIPES IN THE DATABASE 
+The `/recipes/` endpoint allows users to fetch all recipes along with their associated ingredients using the GET method. It queries the database for all records in the Recipe table and returns them in a JSON format. The endpoint responds with a 200 OK status and either a list of recipes.
+
+## 1. HTTP Verb
+
+- **GET**: This method is used to retrieve a list of all the recipes along with their associated ingredients, that current exist in the database. User's do not need to be logged in or authenticated to browse the meal planner databases recipes.
+
+### 2. Path or Route
+
+- **Path**: `/recipes`
+
+### 3. Required Body Data or Header Data
+
+There is no body data or header data (authorisation) required to make this request.
+
+### 4. Response
+
+- **Success Response**: If recipes are successfully retrieved from the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+![Get All Recipes](docs/getallrecipes.png)
+
+### GET ONE SPECIFIC RECIPE  
+The /recipes/<int:recipe_id> endpoint allows clients to fetch the details of a specific recipe using the GET method. It queries the database for the recipe with the provided recipe_id integer and returns it in a JSON format. If the recipe is found, the server responds with a 200 OK status and the recipe details. If the recipe is not found, the server returns a 404 Not Found status with an appropriate error message.
+
+## 1. HTTP Verb
+
+- **GET**: This method is used to retrieve a specific recipe along with their associated ingredients by it's recipe_id, if the recipe currently exists in the database. User's do not need to be logged in or authenticated to browse a specific recipe in the meal planner database.
+
+### 2. Path or Route
+
+- **Path**: `/recipes/<int:recipe_id>` (Note; `<int:recipe_id>` is a placeholder for the recipe_id, eg; the int: 3)
+
+### 3. Required Body Data or Header Data
+
+There is no body data or header data (authorisation) required to make this request.
+
+### 4. Response
+
+- **Success Response**: If the specific recipe exists, and is successfully retrieved from the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+![Get One Recipes](docs/getonerecipe.png)
+
+- **Error Response**: If the recipe with the specified recipe_id does not exist or can not be found in the meal planner  database (HTTP Status Code: 404 Not Found), the API will return:
+
+![Can't find Recipe](docs/recipe_notfound.png)  
+
+### CREATE A RECIPE  
+The `/recipes/` endpoint allows authenticated users to create a new recipe using the POST method. The request must include a valid JWT token and JSON data with the recipe details. The recipe is then associated with the user who created it, and any new ingredients that are not already in the database are added. Upon successful creation of a new recipe, the API returns the recipe details with a 201 Created status. If there are any validation issues, the API responds with an appropriate error message.
+
+## 1. HTTP Verb
+
+- **POST**: This method is used to create a new recipe in the database. The request must include a valid JWT token in the Authorisation header. This token is used to authenticate the user, and associate the user with the recipe created.
+
+### 2. Path or Route
+
+- **Path**: `/recipes`
+
+### 3. Required Body Data or Header Data
+
+The request being made, must include a valid JWT token in the Authorisation header. This token is used to authenticate the user, and associate the user with the recipe created. The request body must contain JSON data that includes the following fields:  
+- **name**: The name of the recipe is required, must be valid (eg; At least 4 characters in length)
+- **description**: A description of the recipe, that meets what is stored in VALID_DESCRIPTIONS, eg; "keto", Glute Free" etc.
+- **recipe_ingredients**: A list of ingredients associated with the recipe. Each ingredient object should contain:
+    - **ingredient**: The name of the ingredient, must be valid (eg; At least 4 characters in length).
+    - **amount**: The amount of the ingredient for the recipe, must be a number (float), greater that 0.
+    - **unit**: The unit of measurement of the ingredient needed in the recipe, must be valid (eg; At least 1 character in length)
+
+**Example JSON body** Where a user would like to create a new recipe, named "Steak Bearnaise", that is described as "Low Carb, Gluten Free" to be added to the database:
+
+```json
+{
+  {
+    "name": "Steak Bearnaise",
+    "description": "Low Carb, Keto, Gluten Free",
+    "recipe_ingredients": [
+        {
+            "ingredient": { "name": "Fillet Steak" },
+            "amount": 250,
+            "unit": "grams"
+        },
+        {
+            "ingredient": { "name": "Bearnaise Sauce" },
+            "amount": "100",
+            "unit": "mls"
+        },
+        {
+            "ingredient": { "name": "Butter" },
+            "amount": 20,
+            "unit": "grams"
+        },
+        {
+            "ingredient": { "name": "Organic Salad Mix" },
+            "amount": "200",
+            "unit": "grams"
+        }
+    ]
+}
+}
+```
+
+### 4. Response
+
+- **Success Response**: If the user is authenticated, and the recipe is successfully created (HTTP Status Code: 200 OK), the API will return:
+
+![Recipe Created Successfully](docs/recipe_created.png)
+
+- **Error Response**: If there are any issues with the input data, such as any missing and required fields, in this example, the description is missing (HTTP Status Code: 400 Bad Request), the API will return:
+
+![Recipe Missing Field](docs/recipe_missingfield.png)  
+
+
+### UPDATE A RECIPE  
+The `/recipes/<int:recipe_id>` endpoint allows authenticated users to update a specific recipe using the PUT or PATCH methods. The request must include a valid JWT token, and the user must be either the creator of the recipe or an admin. The endpoint supports updates to the recipe's name, description, and ingredients, including adding, updating, or deleting ingredients. The server responds with the updated recipe details if successful, or appropriate error messages if the recipe is not found, the user is unauthorised, or the request data is invalid.
+
+## 1. HTTP Verb
+
+- **PUT**: This method is used to update an entire recipe, a user must be authenticated and own the recipe, or be an admin.
+
+- **PATCH**: This method is used to update specific parts of a recipe, for example, just an ingredient amount needs to be changed in a recipe. Again, a user must be authenticated and own the recipe, or be an admin.
+
+### 2. Path or Route
+
+- **Path**: `/recipes/<int:recipe_id>`  (Note; `<int:recipe_id>` is a placeholder for the recipe_id, eg; the int: 3)
+
+### 3. Required Body Data or Header Data
+
+The request being made, must include a valid JWT token in the Authorisation header. This token is used to authenticate the user, and associate the user with the recipe created. The request body must contain JSON data that includes the following fields:  
+- **name**: The new name for the recipe if the user would like to update it (optional)
+- **description**: The new description for the recipe if the user would like to update (optional)
+- **recipe_ingredients**: The list of ingredients associated with the recipe the user would like to update/add/delete:
+    - **ingredient**: The name of the ingredient is always needed to add, update or delete. (required)
+    - **amount**: The amount of the ingredient for the recipe, if the user would like to update (optional)
+    - **unit**: The unit of measurement of the ingredient needed in the recipe, if the user would like to update (optional)
+    - **delete**: A boolean (true/false) indicating whether to remove the ingredient (optional)
+
+**Example JSON body**: Where a user would like to update an existing recipe, named "Steak Bearnaise". The user would like to change the amount of the ingredient named  "Bearnaise Sauce" to 150 (vs 100), and delete the ingredient named: "Butter" (Note; the name and description of the recipe is not required in the request, however I left them there to create a better awareness of the request being made):
+
+```json
+{
+  "name": "Steak Bearnaise",
+  "description": "Low Carb, Keto, Gluten Free",
+  "recipe_ingredients": [
+    {
+      "ingredient": { "name": "Fillet Steak" },
+      "amount": 250,
+      "unit": "grams"
+    },
+    {
+      "ingredient": { "name": "Bearnaise Sauce" },
+      "amount": 150,
+      "unit": "mls"
+    },
+    {
+      "ingredient": { "name": "Butter" },
+      "delete": true
+    },
+    {
+      "ingredient": { "name": "Organic Salad Mix" },
+      "amount": 200,
+      "unit": "grams"
+    }
+  ]
+}
+```
+
+### 4. Response
+
+- **Success Response**: If the user is authenticated, and the recipe is successfully updated (HTTP Status Code: 200 OK), the API will return:
+
+![Recipe Updated Successfully](docs/update_recipesuccess.png)
+
+- **Error Response**: If there are any issues with the input data, such as any missing and required fields or improperly formatted data in the request, in this example, the name of the ingredient that is to be updated is missing (HTTP Status Code: 400 Bad Request), the API will return:
+
+![Recipe Update Missing Field](docs/update_recipebad.png)  
+
+- **Error Response**: If the recipe with the specified recipe_id that is to be updated does not exist, or can not be found in the meal planner database (HTTP Status Code: 404 Not Found), the API will return:
+
+![Can't find Recipe to be Updated](docs/update_recipenotfound.png)  
+
+- **Error Response**: If the user making the request does not have permission to update the recipe, that is, they are not an admin, or not the owner of the recipe (via JWT) (HTTP Status Code: 403 Forbidden), the API will return:
+
+![Non-Admin Trys to Update Recipe that doesn't belong to them](docs/update_recipeforbidden.png)
+
+### DELETING A RECIPE (By a user that is not admin) 
+The `/recipes/<int:recipe_id>` endpoint allows authenticated users to delete a specific recipe using the DELETE method. The request must include a valid JWT token, and the user must be either the creator of the recipe or an admin. Predefined recipes can only be deleted by admins. If the deletion is successful, the server responds with a 200 OK status and a confirmation message. If the recipe is not found or the user is unauthorised to delete the recipe, the appropriate error messages are returned.
+
+### 1. HTTP Verb
+
+- **DELETE**: This endpoint uses the DELETE HTTP method to remove a specific recipe from the database. The user must own the recipe (unless they are an admin), be recently logged in, and authenticated via their JWT to perform this action.
+
+### 2. Path or Route
+
+- **Path**: `/recipes/<int:recipe_id>` (Note; `<int:recipe_id>` is a placeholder for the recipes recipe_id, eg; the int: 3)
+
+### 3. Required Body Data or Header Data  
+
+There is no body data required to make this request. However, the request must include a valid JWT token in the Authorisation header, to authenticate the user making the request is the owner of the recipe or is_admin:  
+
+- **Example JWT Token**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyNzU3NDE4NiwianRpIjoiMmUyYzZjYWYtMTM1Yi00ZmFkLWFmMGYtZTVmNDVmNjUzNDJhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3Mjc1NzQxODYsImNzcmYiOiIzMTIxYmQzZS1lZDYzLTQ2NDQtOTYyMS05NmY4MjA5ZDQ1ZGYiLCJleHAiOjE3Mjc2NjA1ODZ9.e6uOPoV1OluxBJmEOjSePp4xLvD1Iq6eIbQo1kp7zVY`
+
+
+### 4. Response
+
+- **Success Response**: If the user owns the recipe or is_admin, and so successfully deletes the recipe, providing they have their valid JWT token entered correctly in the header (HTTP Status Code: 200 OK), the API will return:
+
+![Successful Recipe Deletion](docs/delete_recipesuccess.png)
+
+- **Error Response**: If the user making the request does not have permission to delete the recipe, that is; they are neither the owner nor an admin (HTTP Status Code: 403 Forbidden), the API will return:
+
+![User Trys to Change Email](docs/delete_recipeforbidden.png)  
+
+- **Error Response**: If the user making the request is trying to delete a predefined recipe, that is; they not an admin (HTTP Status Code: 403 Forbidden), the API will return:
+
+![User Trys to Change Email](docs/delete_predefined.png) 
+
+- **Error Response**: If the recipe with the specified recipe_id does not exist in the database, (HTTP Status Code: 404 Not Found), the API will return:
+
+![User Trys to Change Admin Status](docs/delete_recipenotfound.png) 
+
+### GET ALL VEGAN RECIPES IN THE DATABASE 
+The `/recipes/vegan` endpoint allows clients to fetch all recipes that contain the word "Vegan" in their description using the GET method. The endpoint performs a case-insensitive search and returns a list of matching recipes in JSON format. Whether Vegan recipes are found or not, the server responds with a 200 OK status.
+
+## 1. HTTP Verb
+
+- **GET**: This method is used to retrieve a list of all recipes that contain the word "Vegan" in their description. User's do not need to be logged in or authenticated to browse the meal planner databases for Vegan recipes.
+
+### 2. Path or Route
+
+- **Path**: `/recipes/vegan`
+
+### 3. Required Body Data or Header Data
+
+There is no body data or header data (authorisation) required to make this request.
+
+### 4. Response
+
+- **Success Response**: If any Vegan recipes are successfully retrieved from the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+![Get All Vegan Recipes](docs/getvegan_recipes.png)
+
+- **Empty Response**: If no Vegan recipes are currently in the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+ ![No Vegan Recipes](docs/novegan_recipes.png)
+
+
+### GET ALL KETO RECIPES IN THE DATABASE 
+The `/recipes/keto` endpoint allows clients to fetch all recipes that contain the word "Keto" in their description using the GET method. The endpoint performs a case-insensitive search and returns a list of matching recipes in JSON format. Whether Keto recipes are found or not, the server responds with a 200 OK status.
+
+## 1. HTTP Verb
+
+- **GET**: This method is used to retrieve a list of all recipes that contain the word "Keto" in their description. User's do not need to be logged in or authenticated to browse the meal planner databases for Keto recipes.
+
+### 2. Path or Route
+
+- **Path**: `/recipes/keto`
+
+### 3. Required Body Data or Header Data
+
+There is no body data or header data (authorisation) required to make this request.
+
+### 4. Response
+
+- **Success Response**: If any Keto recipes are successfully retrieved from the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+![Get All Keto Recipes](docs/getketo_recipes.png)
+
+- **Empty Response**: If no Keto recipes are currently in the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+ ![No Keto Recipes](docs/noketo_recipes.png)
+
+ ### GET ALL GLUTEN FREE RECIPES IN THE DATABASE 
+The `/recipes/glten-free` endpoint allows clients to fetch all recipes that contain the word "Gluten Free" in their description using the GET method. The endpoint performs a case-insensitive search and returns a list of matching recipes in JSON format. Whether Gluten recipes are found or not, the server responds with a 200 OK status.
+
+## 1. HTTP Verb
+
+- **GET**: This method is used to retrieve a list of all recipes that contain the words "Gluten Free" in their description. User's do not need to be logged in or authenticated to browse the meal planner databases for Gluten Free recipes.
+
+### 2. Path or Route
+
+- **Path**: `/recipes/gluten-free`
+
+### 3. Required Body Data or Header Data
+
+There is no body data or header data (authorisation) required to make this request.
+
+### 4. Response
+
+- **Success Response**: If any Gluten Free recipes are successfully retrieved from the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+![Get All Vegan Recipes](docs/getglutenfree_recipes.png)
+
+- **Empty Response**: If no Keto recipes are currently in the database,
+ (HTTP Status Code: 200 OK), the API will return:
+
+ ![No Vegan Recipes](docs/noglutenfree_recipes.png)
+
+ ## `controllers/user_recipe_controller.py`
+
+ ### ADD A RECIPE TO A USERS LIST
+The `/user-recipes` endpoint allows authenticated users to add a recipe to their personal recipe list using the POST method. The request must include a valid JWT token and the recipe_id of the recipe they wish to add. The database checks if the recipe exists and whether it is already in the user's list to avoid any duplicate recipes. Upon successful addition, the server responds with a 201 Created status and a confirmation message. If the recipe is not found, or if it's already in the user's list, appropriate error messages are returned.
+
+## 1. HTTP Verb
+
+- **POST**: This method is used to add a recipe to a user's personal recipe list (user recipes). The request must include a valid JWT token in the Authorisation header. This token is used to authenticate the user, and associate the user with the recipe added to their personal list.
+
+### 2. Path or Route
+
+- **Path**: `/user-recipes`
+
+### 3. Required Body Data or Header Data
+
+The request being made, must include a valid JWT token in the Authorisation header, which identifies the user to add a recipe to their associated list. The request body must contain JSON data that includes the following field:  
+- **recipe_id**: The recipe_id (eg; 1) of the recipe that the user wants to add to their personal list.
+
+**Example JSON body**: Where a user would like to add the recipe with the recipe_id of 1 to their personal list (user_recipes):
+
+```json
+{
+  "recipe_id": 1
+}
+```
+
+### 4. Response
+
+- **Success Response**:  If the recipe is successfully added to the user's personal list (HTTP Status Code: 200 OK), the API will return:
+
+![User Recipe Successfully Added to List](docs/userrecipe_added.png)
+
+- **Error Response**: If there are any issues with the input data, such as a missing and required field, in this example, the recipe_id is not provided in the request body (HTTP Status Code: 400 Bad Request), the API will return:
+
+![Recipe Missing Field](docs/userrecipe_bad.png) 
+
+- **Error Response**: If the recipe with the specified recipe_id does not exist in the database, (HTTP Status Code: 404 Not Found), the API will return:
+
+![User Trys to Change Admin Status](docs/userrecipe_notfound.png) 
+
+- **Error Response**: If the recipe with the specified recipe_id already exists in the users personal list, (HTTP Status Code: 409 Conflict), the API will return:
+
+![User Trys to Change Admin Status](docs/userrecipe_conflict.png) 
+
+### GET ALL RECIPES IN A USERS PERSONAL LIST  
+The `/user-recipes` endpoint allows authenticated users to retrieve the names of all recipes they have saved in their personal recipe/shopping list using the GET method. The request must include a valid JWT token. If the user has recipes in their list, the server responds with a list of recipe names in JSON format. If the user has no recipes, a message is returned indicating the list is empty. The server responds with a 200 OK status in both cases.
+
+## 1. HTTP Verb
+
+- **GET**: This method is used to retrieve all recipes (by name) that a user has saved in their personal recipe list/shopping list (user_recipes). A user needs to be logged in or authenticated (JWT) to view heir personal recipe list. 
+
+### 2. Path or Route
+
+- **Path**: `/user-recipes`
+
+### 3. Required Body Data or Header Data
+
+There is no body data required to make this request. However, the request must include a valid JWT token in the Authorisation header. This token is used to authenticate and identify the user making the request.
+
+### 4. Response
+
+- **Success Response**: If the user has recipes saved in their personal list, (HTTP Status Code: 200 OK), the API will return:
+
+![User Recipes List By Name](docs/userrecipes_list.png)
+
+- **Empty Response**: If the user has no recipes in their personal list (HTTP Status Code: 200 OK), the API will return:
+
+![No Users Recipes In List](docs/userrecipes_none.png)
+
+### GET A USERS SHOPPING LIST (Ingredients for recipes saved)  
+The `/user-recipes/shopping-list` endpoint allows authenticated users to generate a shopping list by retrieving all the ingredients from the recipes saved in their personal recipe list using the GET method. The request must include a valid JWT token. The system fetches the user's recipes, compiles the ingredients, and returns them in a list. If the user has no saved recipes, the server returns a message indicating the list is empty. The server responds with a 200 OK status in both cases.
+
+## 1. HTTP Verb
+
+- **GET**: This method is used to create a shopping list by retrieving all ingredients from the recipes saved in a user's personal recipe list. A user needs to be logged in or authenticated (JWT) to retrieve this list. 
+
+### 2. Path or Route
+
+- **Path**: `/user-recipes/shopping-list`
+
+### 3. Required Body Data or Header Data
+
+There is no body data required to make this request. However, the request must include a valid JWT token in the Authorisation header. This token is used to authenticate and identify the user making the request.
+
+### 4. Response
+
+- **Success Response**: If the user has recipes saved in their personal list, (HTTP Status Code: 200 OK), the API will return:
+
+![User Recipes Shopping List](docs/userrecipes_shop.png)
+
+- **Empty Response**: If the user has no recipes in their personal list (HTTP Status Code: 200 OK), the API will return:
+
+![No Users Recipes In For Shopping List](docs/userrecipes_shopnone.png)
+
+### DELETING A RECIPE IN A USERS LIST
+The `/user-recipes/<int:recipe_id>` endpoint allows authenticated users to delete a specific recipe from their personal recipe list using the DELETE method. The request must include a valid JWT token. The system checks whether the recipe exists in the user's list, and if found, it is deleted. If the recipe is not found, an error message is returned. The server responds with a 200 OK status upon successful deletion or a 404 Not Found error if the recipe is not in the user's list.
+
+### 1. HTTP Verb
+
+- **DELETE**: This method is used to delete a specific recipe from a user's personal recipe/shopping list (user recipes).
+
+### 2. Path or Route
+
+- **Path**: `/user-recipes/<int:recipe_id>` (Note; `<int:recipe_id>` is a placeholder for the recipe's recipe_id, eg; the int: 3)
+
+### 3. Required Body Data or Header Data  
+
+There is no body data required to make this request. However, the request must include a valid JWT token in the Authorisation header, to authenticate, and identify the user making the request.
+
+- **Example JWT Token**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyNzU3NDE4NiwianRpIjoiMmUyYzZjYWYtMTM1Yi00ZmFkLWFmMGYtZTVmNDVmNjUzNDJhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3Mjc1NzQxODYsImNzcmYiOiIzMTIxYmQzZS1lZDYzLTQ2NDQtOTYyMS05NmY4MjA5ZDQ1ZGYiLCJleHAiOjE3Mjc2NjA1ODZ9.e6uOPoV1OluxBJmEOjSePp4xLvD1Iq6eIbQo1kp7zVY`
+
+
+### 4. Response
+
+- **Success Response**: If the recipe is successfully deleted from the user's list (HTTP Status Code: 200 OK), the API will return:
+
+![Successful User Recipe Deletion](docs/userrecipes_deletesuccess.png)
+
+- **Error Response**: If the recipe with the specified recipe_id is not found in the user's list (HTTP Status Code: 404 Not Found), the API will return:
+
+![User Trys to Delete a Recipe That is Not Found](docs/userrecipes_deletenotfound.png) 
+

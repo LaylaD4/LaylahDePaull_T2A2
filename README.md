@@ -422,7 +422,7 @@ recipe_ingredients = db.relationship("RecipeIngredient", back_populates="recipe"
 
 PostgreSQL’s performance can be impacted by several factors, including large tables, inefficient query structures, and complex data relationships. As an applications data grows, these factors become more significant. PostgreSQL, by default, uses sequential scans, where it reads each row in a table to find the required data. This method can become inefficient as tables grow larger, leading to slower query execution times. To improve performance, it’s crucial to understand PostgreSQL’s indexing mechanisms, which allow the database to quickly locate the required data without scanning the entire table. Complex queries that involve multiple joins between tables or aggregations can also place a heavy load on the database, further affecting performance. Therefore, maintaining good performance requires a solid understanding of query optimisation, indexing, and efficient database design.
 
-For example, as the recipes table in your API increases in size, a simple query like the one below could lead to slower query execution times, especially if the database isn't properly optimised. Proper indexing and query optimisation are essential to maintaining performance as an applications data grows in volume and complexity.
+For example, as the recipes table in my API increases in size, a simple query like the one below could lead to slower query execution times, especially if the database isn't properly optimised. Proper indexing and query optimisation are essential to maintaining performance as an applications data grows in volume and complexity.
 
  ```Python
  # controllers/recipe_controller.py
@@ -445,6 +445,76 @@ Additionally, PostgreSQL’s open-source development model can lead to potential
 
 
 ## R5. Explain the features, purpose and functionalities of the object-relational mapping system (ORM) used in this app.
+
+In the Meal Planner app, SQLAlchemy, an Object-Relational Mapping (ORM) tool, plays a vital role in managing the database. ORMs simplify working with databases by letting developers use Python instead of writing SQL queries. Below are several key features of SQLAlchemy and how they support my API's functionality.
+
+One of the main benefits of SQLAlchemy is simplifying database interactions. Instead of manually writing SQL queries, developers can define models in Python that represent database tables. For example, a User model corresponds to a users table in the database. This allows developers to easily perform database operations without worrying about SQL syntax.
+
+```Python
+# User Model Defined
+class User(db.Model):
+    __tablename__ = "users"
+    user_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date())
+    is_admin = db.Column(db.Boolean, default=False)
+
+# Create a new user instance
+new_user = User(username ="layla4",
+                email = "layla@email.com",
+                password = "Abc&123") # Hashed
+
+# Add the user to the session and commit to the database
+db.session.add(new_user)
+db.session.commit()
+
+# Query the database to retrieve the user by username:
+stmt = db.select(User).filter_by(username="layla4")
+user = db.session.scalar(user)
+```
+
+Another important feature is automated schema generation. When you define a model in Python, SQLAlchemy automatically creates the necessary tables and columns in the database. This keeps the database structure consistent with the code, saving developers from manually updating the database schema as the project evolves. For example, defining my API Recipe model automatically generates a recipes table with the necessary attributes:
+
+```Python
+# Recipe model (SQLAlchemy generates the corresponding table)
+class Recipe(db.Model):
+    __tablename__ = "recipes"
+    
+    recipe_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(100))
+    is_predefined = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date())
+    # Create Foreign Key that references 'users' table
+    user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+
+# Table Generated:
+                                         Table "public.recipes"
+    Column     |          Type          | Collation | Nullable |                  Default                   
+---------------+------------------------+-----------+----------+--------------------------------------------
+ recipe_id     | integer                |           | not null | nextval('recipes_recipe_id_seq'::regclass)
+ name          | character varying(100) |           | not null | 
+ description   | character varying(100) |           |          | 
+ is_predefined | boolean                |           |          | 
+ created_at    | date                   |           |          | 
+ user_id       | integer                |           | not null | 
+```
+
+SQLAlchemy is also great at relationship management. Relational databases contain related tables, and managing these relationships can be complex. SQLAlchemy allows developers to define relationships directly in their models, simplifying the process of joining related tables. For example, in my API; a User can have multiple Recipes, and each Recipe can include many Ingredients. SQLAlchemy takes care of the foreign keys and connections, making it simple to manage this related data.
+
+In addition to handling relationships, SQLAlchemy manages sessions and transactions. It allows developers to make multiple changes to the database and commit them all at once. This ensures that all changes are saved together, maintaining data consistency. In my API, when a new recipe is added, SQLAlchemy keeps track of changes in a session. Once you call session.commit(), all the changes are saved to the database at the same time, ensuring data integrity and consistency.
+
+Finally, SQLAlchemy integrates with Marshmallow for data validation and serialisation. Marshmallow ensures that only valid data (eg; correct email formats, required recipe names) is stored in the database. It also serialises complex objects into JSON for API responses. For example, RecipeSchema serialises recipe data, including nested fields like the associated user and ingredients, into a structured JSON format, ensuring reliables API responses.
+
+In conclusion, SQLAlchemy ORM greatly simplifies database management by offering features like simplifying interactions, automating schema creation, managing relationships, handling transactions, and ensuring data validation. These features make it an essential tool for efficiently managing databases in APIs like my Meal Planner.
+
+#### References
+
+1. [What is SQLAlchemy Used For? An Overview with Practical Examples](https://www.cdata.com/blog/what-is-sqlalchemy)
+2. [Must know package to build your system — Real world examples with SQLAlchemy in Python](https://medium.com/@danielwume/must-know-package-to-build-your-system-real-world-examples-with-sqlalchemy-in-python-db8c72a0f6c1)
+
 
 ## R6. Design an entity relationship diagram (ERD) for this app’s database, and explain how the relations between the diagrammed models will aid the database design. <br><br>This should focus on the database design BEFORE coding has begun, eg. during the project planning or design phase.<br>
 
@@ -642,6 +712,8 @@ db.session.add(user_recipe)
 db.session.commit()
 ```
 
+#### TABLE RELATIONSHIP OVERVIEW
+
 - #### User & Recipe: one-to-many (1:N)
 
     The relationship between the users table and the recipes table represents a one-to-many relationship. This means that a user can hold an account without creating any recipes (minimum of zero). However, a user has the option to create multiple recipes (maximum of many) while holding an account. Conversely, each recipe must belong to one, and only one user (minimum and maximum of one) or admin (for predefined recipes).
@@ -664,14 +736,17 @@ db.session.commit()
 
 ### 2. How the Relationships Aid in Database Implementation
 
-- **Efficiency and Data Integrity**: The relationships between these models ensure that data is stored efficiently without unnecessary duplication. For example, ingredients are only stored once in the ingredient table, and the recipe_ingredients table links them to recipes. This structure ensures that the same ingredient can be used across multiple recipes without redundancy.
+In my Meal Planner API, the relationships between models like users, recipes, and ingredients are essential for keeping the database organised, efficient, and tailored to the app’s needs.
 
-- **Scalability**: The use of relationships makes the database structure scalable. As the number of users, recipes, and ingredients grows, the relationships ensure that data remains organised and easy to manage.
+First, these relationships ensure efficiency and data integrity. Ingredients are stored in a single ingredients table, and the recipe_ingredients table links them to specific recipes. This means the same ingredient, like “Almond Flour,” is stored only once but can be used in multiple recipes (eg; Keto and Vegan Pancakes). This relationship structure prevents duplication of ingredient data while allowing each recipe to have its own unique amounts and units for the ingredients it has. 
 
-- **Ease of Querying**: The established relationships simplify data retrieval. For example, retrieving all recipes created by a user, or all ingredients for a recipe, is straightforward due to the clear links between tables.
+The relationships also enhance the scalability of the database. As more users, recipes, and ingredients are added, the structure handles the increased data without becoming disorganised in any way. New recipes can easily link to existing ingredients without needing to re-enter those ingredients. Therefore, adding new users or recipes doesn’t make the database more complex because the relationships between tables keep everything well organised.
 
-- **User Experience:**: These relationships support essential features like user-specific recipe lists, managing ingredients within recipes, and user permissions for creating, updating, or deleting recipes. This improves the user experience by making the app easy to use and responsive to each user's needs.
+Ease of querying is another benefit of these relationships. For example, the relationship between the users and recipes tables allows you to quickly retrieve all the recipes created by a particular user. Similarly, you can easily query all the ingredients for a specific recipe due to the links between the recipes, recipe_ingredients, and ingredients tables. These relationships make it easy to access data without needing complex queries.
 
+Finally, the relationships directly support user-specific features. For example, users can save their favorite recipes using the user_recipes table, which links users to recipes. This setup allows each user to manage their own personal list of saved recipes without duplicating any recipe data. Users can also manage ingredients for their recipes through the recipe_ingredients table, which stores the amounts and units for each ingredient, making it easy to update or change recipes.
+
+In summary, the relationships in the Meal Planner API not only make the database more efficient and scalable but also support essential features like easy data retrieval, personalised recipe lists, and ingredient management. These relationships ensure the API runs smoothly as it grows and remains very user-friendly.
 
 ## R8. Explain how to use this application’s API endpoints. Each endpoint should be explained, including the following data for each endpoint:
 - ## HTTP verb

@@ -520,7 +520,7 @@ In conclusion, SQLAlchemy ORM greatly simplifies database management by offering
 
 ## R6. Design an entity relationship diagram (ERD) for this app’s database, and explain how the relations between the diagrammed models will aid the database design. <br><br>This should focus on the database design BEFORE coding has begun, eg. during the project planning or design phase.<br>
 
-![Meal Planner ERD](/docs/meal_planner_erd.png)
+![Meal Planner ERD](docs/meal_planner_erd.png)
 
 ### 1. Explanation of How the Relations Between the Diagrammed Models will aid the Database Design
 
